@@ -31,5 +31,23 @@
 
 ;;; Code:
 
+(require 'dash)
+(require 'cl)
+
+(defun ertcheck-random-bytes (n)
+  (--map (random 255) (number-sequence 0 (1- n))))
+
+(defun ertcheck-generate-bool (bytes)
+  (not (zerop (logand (-first-item bytes) 1))))
+
+(defun ertcheck-generate-integer (bytes)
+  (let ((result 0))
+    (dolist (byte (-take 4 bytes))
+      (setq result
+            (+ (* result 256)
+               byte)))
+    result))
+
+
 (provide 'ertcheck)
 ;;; ertcheck.el ends here
