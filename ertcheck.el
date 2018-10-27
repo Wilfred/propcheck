@@ -1,6 +1,8 @@
 ;;; ertcheck.el --- quickcheck/hypothesis style ert tests         -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2018  Wilfred Hughes
+;; Version: 0.1
+;; Package-Requires: ((emacs "25.1") (dash "2.11.0"))
 
 ;; Author: Wilfred Hughes <me@wilfred.me.uk>
 ;; Keywords: testing
@@ -32,7 +34,8 @@
 ;;; Code:
 
 (require 'dash)
-(require 'cl)
+(eval-when-compile
+  (require 'cl))
 
 (defun ertcheck-random-bytes (n)
   (--map (random 255) (number-sequence 0 (1- n))))
