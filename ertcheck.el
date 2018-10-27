@@ -37,20 +37,38 @@
 (eval-when-compile
   (require 'cl))
 
-(defun ertcheck-random-bytes (n)
-  (--map (random 255) (number-sequence 0 (1- n))))
+;; A consumable sequence of bytes used to generate test values.
+(defstruct
+    (ertcheck-testdata
+     :named
+     (:constructor ertcheck-testdata
+                   (&optional
+                    (bytes nil))))
+  bytes)
 
-(defun ertcheck-generate-bool (bytes)
-  (not (zerop (logand (-first-item bytes) 1))))
+(defun ertcheck-draw-bytes (testdata num-bytes)
+  "Generate NUM-BYTES of random data, write to TESTDATA and return."
+  (let ((rand-bytes (--map (random 255)
+                           (number-sequence 0 (1- num-bytes)))))
+    (setf (ertcheck-testdata-bytes testdata)
+          (-concat (ertcheck-testdata-bytes testdata)
+                   rand-bytes))
+    rand-bytes))
 
-(defun ertcheck-generate-integer (bytes)
-  (let ((result 0))
-    (dolist (byte (-take 4 bytes))
+(defun ertcheck-generate-bool (testdata)
+  (let ((rand-byte (car (ertcheck-draw-bytes testdata 1))))
+    (not (zerop (logand rand-byte 1)))))
+
+(defun ertcheck-generate-integer (testdata)
+  (let* ((bits-in-integers (1+ (log most-positive-fixnum 2)))
+         (bytes-needed (ceiling (/ bits-in-integers 8.0)))
+         (rand-bytes (ertcheck-draw-bytes testdata bytes-needed))
+         (result 0))
+    (dolist (byte rand-bytes)
       (setq result
             (+ (* result 256)
                byte)))
     result))
-
 
 (provide 'ertcheck)
 ;;; ertcheck.el ends here
