@@ -70,5 +70,19 @@
                byte)))
     result))
 
+(defun ertcheck-generate-list (testdata item-generator)
+  "Generate a list whose items are drawn from ITEM-GENERATOR."
+  (let ((result nil))
+    ;; Dumb: 50% chance of making the list bigger on each draw.
+    ;; See utils.py/more in Hypothesis for a smarter approach.
+    (while (>= (car (ertcheck-draw-bytes testdata 1)) 128)
+      (push (funcall item-generator testdata) result))
+    result))
+
+(defun ertcheck-generate-vector (testdata item-generator)
+  "Generate a vector whose items are drawn from ITEM-GENERATOR."
+  (apply #'vector
+         (ertcheck-generate-list testdata item-generator)))
+
 (provide 'ertcheck)
 ;;; ertcheck.el ends here
