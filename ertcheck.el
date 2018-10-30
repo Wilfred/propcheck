@@ -81,6 +81,7 @@ Note that elisp does not have a separate character type."
          (ascii-range (- max-ascii min-ascii)))
     (+ min-ascii (mod byte ascii-range))))
 
+;; TODO: circular lists, improprer lists/trees.
 (defun ertcheck-generate-list (testdata item-generator)
   "Generate a list whose items are drawn from ITEM-GENERATOR."
   (let ((result nil))
