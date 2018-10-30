@@ -70,6 +70,17 @@
                byte)))
     result))
 
+(defun ertcheck-generate-ascii-char (testdata)
+  "Generate a number that's an ASCII char.
+Note that elisp does not have a separate character type."
+  ;; between 32 and 126
+  (let* ((rand-bytes (ertcheck-draw-bytes testdata 1))
+         (byte (car rand-bytes))
+         (min-ascii 32)
+         (max-ascii 126)
+         (ascii-range (- max-ascii min-ascii)))
+    (+ min-ascii (mod byte ascii-range))))
+
 (defun ertcheck-generate-list (testdata item-generator)
   "Generate a list whose items are drawn from ITEM-GENERATOR."
   (let ((result nil))
@@ -83,6 +94,18 @@
   "Generate a vector whose items are drawn from ITEM-GENERATOR."
   (apply #'vector
          (ertcheck-generate-list testdata item-generator)))
+
+(defun ertcheck-generate-string (testdata)
+  "Generate a string using TESTDATA."
+  (let ((chars nil))
+    ;; Dumb: 50% chance of making the string bigger on each draw.
+    ;; TODO: see what hypothesis does
+    ;; TODO: multibyte support, key sequence support
+    (while (>= (car (ertcheck-draw-bytes testdata 1)) 128)
+      (push
+       (ertcheck-generate-ascii-char testdata)
+       chars))
+    (concat chars)))
 
 (provide 'ertcheck)
 ;;; ertcheck.el ends here
