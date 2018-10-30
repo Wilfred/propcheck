@@ -37,6 +37,8 @@
 (eval-when-compile
   (require 'cl))
 
+(defvar ertcheck-max-examples 100)
+
 ;; A consumable sequence of bytes used to generate test values.
 (defstruct
     (ertcheck-testdata
@@ -72,6 +74,12 @@ it to TESTDATA and return it."
               (-concat (ertcheck-testdata-bytes testdata)
                        rand-bytes))
         rand-bytes))))
+
+(defun ertcheck-freeze (testdata)
+  "Mark TESTDATA as frozen, so we can start shrinking with it."
+  (setf (ertcheck-testdata-frozen testdata) t)
+  (setf (ertcheck-testdata-i testdata) 0)
+  nil)
 
 (defun ertcheck-generate-bool (testdata)
   (let ((rand-byte (car (ertcheck-draw-bytes testdata 1))))
