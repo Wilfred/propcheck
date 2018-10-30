@@ -43,17 +43,35 @@
      :named
      (:constructor ertcheck-testdata
                    (&optional
-                    (bytes nil))))
-  bytes)
+                    (bytes nil)
+                    (i 0)
+                    (frozen nil))))
+  bytes
+  i
+  frozen)
 
 (defun ertcheck-draw-bytes (testdata num-bytes)
-  "Generate NUM-BYTES of random data, write to TESTDATA and return."
-  (let ((rand-bytes (--map (random 255)
-                           (number-sequence 0 (1- num-bytes)))))
-    (setf (ertcheck-testdata-bytes testdata)
-          (-concat (ertcheck-testdata-bytes testdata)
-                   rand-bytes))
-    rand-bytes))
+  "Get NUM-BYTES of random data (generating if necessary), write
+it to TESTDATA and return it."
+  (let ((i (ertcheck-testdata-i testdata)))
+    ;; Update i to record our position in the bytes.
+    (cl-incf (ertcheck-testdata-i testdata) num-bytes)
+    
+    (if (ertcheck-testdata-frozen testdata)
+        ;; TESTDATA was previously generated, just return the bytes we
+        ;; generated in the past.
+        (->> (ertcheck-testdata-bytes testdata)
+             (-drop i)
+             (-take num-bytes))
+
+      ;; We're currently generating data, add it to the existing
+      ;; bytes.
+      (let ((rand-bytes (--map (random 255)
+                               (number-sequence 0 (1- num-bytes)))))
+        (setf (ertcheck-testdata-bytes testdata)
+              (-concat (ertcheck-testdata-bytes testdata)
+                       rand-bytes))
+        rand-bytes))))
 
 (defun ertcheck-generate-bool (testdata)
   (let ((rand-byte (car (ertcheck-draw-bytes testdata 1))))
