@@ -49,17 +49,22 @@
                    (&optional
                     (bytes nil)
                     (i 0)
+                    (blocks nil)
                     (frozen nil))))
   bytes
   i
+  blocks
   frozen)
 
 (defun ertcheck-draw-bytes (testdata num-bytes)
   "Get NUM-BYTES of random data (generating if necessary), write
 it to TESTDATA and return it."
-  (let ((i (ertcheck-testdata-i testdata)))
+  (let* ((i (ertcheck-testdata-i testdata))
+         (new-i (+ i num-bytes)))
     ;; Update i to record our position in the bytes.
-    (cl-incf (ertcheck-testdata-i testdata) num-bytes)
+    (setf (ertcheck-testdata-i testdata) new-i)
+    ;; Store which regions of data were accessed, as inclusive ranges.
+    (push (cons i (1- new-i)) (ertcheck-testdata-blocks testdata))
 
     (if (ertcheck-testdata-frozen testdata)
         ;; TESTDATA was previously generated, just return the bytes we
@@ -90,7 +95,8 @@ it to TESTDATA and return it."
     (ertcheck-testdata
      (-replace-at i value bytes)
      (ertcheck-testdata-i testdata)
-     (ertcheck-testdata-frozen testdata))))
+     (ertcheck-testdata-frozen testdata)
+     (ertcheck-testdata-blocks testdata))))
 
 (defun ertcheck-shrink (testdata predicate)
   "Attempt to find a smaller version of TESTDATA where predicate
