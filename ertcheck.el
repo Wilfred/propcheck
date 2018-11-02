@@ -70,8 +70,9 @@ it to TESTDATA and return it."
 
       ;; We're currently generating data, add it to the existing
       ;; bytes.
-      (let ((rand-bytes (--map (random 255)
-                               (number-sequence 0 (1- num-bytes)))))
+      (let (rand-bytes)
+        (dotimes (_ num-bytes)
+          (push (random 255) rand-bytes))
         (setf (ertcheck-testdata-bytes testdata)
               (-concat (ertcheck-testdata-bytes testdata)
                        rand-bytes))
