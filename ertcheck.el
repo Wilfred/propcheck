@@ -38,6 +38,8 @@
   (require 'cl))
 
 (defvar ertcheck-max-examples 100)
+;; What does hypothesis do?
+(defvar ertcheck-max-shrinks 50)
 
 ;; A consumable sequence of bytes used to generate test values.
 (defstruct
@@ -80,6 +82,32 @@ it to TESTDATA and return it."
   (setf (ertcheck-testdata-frozen testdata) t)
   (setf (ertcheck-testdata-i testdata) 0)
   nil)
+
+(defun ertcheck-testdata-set-byte (testdata i value)
+  "Return a copy of TESTDATA with byte I set to VALUE."
+  (let ((bytes (ertcheck-testdata-bytes testdata)))
+    (ertcheck-testdata
+     (-replace-at i value bytes)
+     (ertcheck-testdata-i testdata)
+     (ertcheck-testdata-frozen testdata))))
+
+(defun ertcheck-shrink (testdata predicate)
+  ;; Zero one byte at a time.
+  (let ((attempts 0)
+        (changed t))
+    (while (and changed (< attempts ertcheck-max-shrinks))
+      (setq changed nil)
+      
+      (--each-indexed (ertcheck-testdata-bytes testdata)
+        (unless (zerop it)
+          (cl-incf attempts)
+          (let ((new-testdata
+                 (ertcheck-testdata-set-byte testdata it-index 0)))
+            (setq changed (funcall predicate new-testdata))
+            (ertcheck-freeze new-testdata)
+            (when changed
+              (setq testdata new-testdata)))))))
+  testdata)
 
 (defun ertcheck-generate-bool (testdata)
   (let ((rand-byte (car (ertcheck-draw-bytes testdata 1))))
