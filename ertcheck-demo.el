@@ -1,7 +1,7 @@
 (require 'ertcheck)
 
 (defun ertcheck-buggy-max (x y)
-  (if (< x 10)
+  (if (< x 101)
       ;; Correct implementation.
       (if (< x y) y x)
     ;; Here's a bug!
