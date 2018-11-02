@@ -60,7 +60,7 @@ it to TESTDATA and return it."
   (let ((i (ertcheck-testdata-i testdata)))
     ;; Update i to record our position in the bytes.
     (cl-incf (ertcheck-testdata-i testdata) num-bytes)
-    
+
     (if (ertcheck-testdata-frozen testdata)
         ;; TESTDATA was previously generated, just return the bytes we
         ;; generated in the past.
@@ -92,17 +92,63 @@ it to TESTDATA and return it."
      (ertcheck-testdata-frozen testdata))))
 
 (defun ertcheck-shrink (testdata predicate)
-  ;; Zero one byte at a time.
+  "Attempt to find a smaller version of TESTDATA where predicate
+still returns t."
+  (-> testdata
+      (ertcheck-shrink--zero predicate)
+      (ertcheck-shrink--divide predicate)
+      (ertcheck-shrink--decrement predicate)))
+
+(defun ertcheck-shrink--zero (testdata predicate)
+  "Shrink TESTDATA by zeroing bytes."
   (let ((attempts 0)
         (changed t))
     (while (and changed (< attempts ertcheck-max-shrinks))
       (setq changed nil)
-      
+
+      ;; TODO: Only consider bytes used during generation (the largest
+      ;; value of i).
       (--each-indexed (ertcheck-testdata-bytes testdata)
         (unless (zerop it)
           (cl-incf attempts)
           (let ((new-testdata
                  (ertcheck-testdata-set-byte testdata it-index 0)))
+            (setq changed (funcall predicate new-testdata))
+            (ertcheck-freeze new-testdata)
+            (when changed
+              (setq testdata new-testdata)))))))
+  testdata)
+
+(defun ertcheck-shrink--divide (testdata predicate)
+  "Attempt to shrink TESTDATA by halving each byte."
+  (let ((attempts 0)
+        (changed t))
+    (while (and changed (< attempts ertcheck-max-shrinks))
+      (setq changed nil)
+
+      (--each-indexed (ertcheck-testdata-bytes testdata)
+        (unless (or (eq it 0) (eq it 1))
+          (cl-incf attempts)
+          (let ((new-testdata
+                 (ertcheck-testdata-set-byte testdata it-index (/ it 2))))
+            (setq changed (funcall predicate new-testdata))
+            (ertcheck-freeze new-testdata)
+            (when changed
+              (setq testdata new-testdata)))))))
+  testdata)
+
+(defun ertcheck-shrink--decrement (testdata predicate)
+  "Attempt to shrink TESTDATA by decrementing each byte."
+  (let ((attempts 0)
+        (changed t))
+    (while (and changed (< attempts ertcheck-max-shrinks))
+      (setq changed nil)
+
+      (--each-indexed (ertcheck-testdata-bytes testdata)
+        (unless (or (eq it 0) (eq it 1))
+          (cl-incf attempts)
+          (let ((new-testdata
+                 (ertcheck-testdata-set-byte testdata it-index (1- it))))
             (setq changed (funcall predicate new-testdata))
             (ertcheck-freeze new-testdata)
             (when changed
