@@ -32,15 +32,13 @@
       (dotimes (_ ertcheck-max-examples)
         (setq testdata (ertcheck-testdata))
         (setq found-example (funcall predicate testdata))
-        (ertcheck-freeze testdata)
+        (setq testdata (ertcheck-freeze testdata))
         (when found-example
           (throw 'found-example t))))
     (when found-example
       (message "Found initial example: %S" testdata)
-      (ertcheck-freeze testdata)
       (setq testdata
-            (ertcheck-shrink testdata predicate))
-      (ertcheck-freeze testdata))
+            (ertcheck-shrink testdata predicate)))
     testdata))
 
 (defun ertcheck-demo-max-pair ()

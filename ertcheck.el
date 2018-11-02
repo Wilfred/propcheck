@@ -78,10 +78,10 @@ it to TESTDATA and return it."
         rand-bytes))))
 
 (defun ertcheck-freeze (testdata)
-  "Mark TESTDATA as frozen, so we can start shrinking with it."
-  (setf (ertcheck-testdata-frozen testdata) t)
-  (setf (ertcheck-testdata-i testdata) 0)
-  nil)
+  "Return a frozen copy of TESTDATA, which we can use to shrink."
+  (let ((i (ertcheck-testdata-i testdata))
+        (bytes (ertcheck-testdata-bytes testdata)))
+    (ertcheck-testdata (-take i bytes) 0 t)))
 
 (defun ertcheck-testdata-set-byte (testdata i value)
   "Return a copy of TESTDATA with byte I set to VALUE."
@@ -114,9 +114,8 @@ still returns t."
           (let ((new-testdata
                  (ertcheck-testdata-set-byte testdata it-index 0)))
             (setq changed (funcall predicate new-testdata))
-            (ertcheck-freeze new-testdata)
             (when changed
-              (setq testdata new-testdata)))))))
+              (setq testdata (ertcheck-freeze new-testdata))))))))
   testdata)
 
 (defun ertcheck-shrink--divide (testdata predicate)
@@ -132,9 +131,8 @@ still returns t."
           (let ((new-testdata
                  (ertcheck-testdata-set-byte testdata it-index (/ it 2))))
             (setq changed (funcall predicate new-testdata))
-            (ertcheck-freeze new-testdata)
             (when changed
-              (setq testdata new-testdata)))))))
+              (setq testdata (ertcheck-freeze new-testdata))))))))
   testdata)
 
 (defun ertcheck-shrink--decrement (testdata predicate)
@@ -158,9 +156,8 @@ still returns t."
                      (1+ it-index)
                      (1+ (nth (1+ it-index) bytes)))))
             (setq changed (funcall predicate new-testdata))
-            (ertcheck-freeze new-testdata)
             (when changed
-              (setq testdata new-testdata)))))))
+              (setq testdata (ertcheck-freeze new-testdata))))))))
   testdata)
 
 (defun ertcheck-generate-bool (testdata)
