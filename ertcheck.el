@@ -140,15 +140,23 @@ still returns t."
 (defun ertcheck-shrink--decrement (testdata predicate)
   "Attempt to shrink TESTDATA by decrementing each byte."
   (let ((attempts 0)
-        (changed t))
+        (changed t)
+        (bytes (ertcheck-testdata-bytes testdata)))
     (while (and changed (< attempts ertcheck-max-shrinks))
       (setq changed nil)
 
-      (--each-indexed (ertcheck-testdata-bytes testdata)
-        (unless (or (eq it 0) (eq it 1))
+      (--each-indexed bytes
+        (unless (zerop it)
           (cl-incf attempts)
           (let ((new-testdata
                  (ertcheck-testdata-set-byte testdata it-index (1- it))))
+            ;; Try incrementing the next byte too.
+            (when (and (eq it 1) (> (length bytes) (1+ it-index)))
+              (setq new-testdata
+                    (ertcheck-testdata-set-byte
+                     new-testdata
+                     (1+ it-index)
+                     (1+ (nth (1+ it-index) bytes)))))
             (setq changed (funcall predicate new-testdata))
             (ertcheck-freeze new-testdata)
             (when changed
