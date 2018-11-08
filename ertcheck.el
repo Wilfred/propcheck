@@ -100,7 +100,8 @@ it to TESTDATA and return it."
 
 (defun ertcheck-shrink (testdata predicate)
   "Attempt to find a smaller version of TESTDATA where predicate
-still returns t."
+still returns t. PREDICATE should be a function that takes a
+`ertcheck-testdata' and returns nil or t."
   (-> testdata
       (ertcheck-shrink--zero predicate)
       (ertcheck-shrink--divide predicate)
