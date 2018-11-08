@@ -114,8 +114,6 @@ still returns t. PREDICATE should be a function that takes a
     (while (and changed (< attempts ertcheck-max-shrinks))
       (setq changed nil)
 
-      ;; TODO: Only consider bytes used during generation (the largest
-      ;; value of i).
       (--each-indexed (ertcheck-testdata-bytes testdata)
         (unless (zerop it)
           (cl-incf attempts)
