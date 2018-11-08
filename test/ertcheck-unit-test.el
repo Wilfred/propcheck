@@ -18,3 +18,12 @@
     (should
      (equal (ertcheck-testdata-bytes shrunk)
             '(0)))))
+
+(ert-deftest ertcheck-draw-bytes ()
+  "Ensure that we set blocks correctly when drawing bytes."
+  (let ((testdata (ertcheck-testdata
+                   (make-list 8 0) 0 nil t)))
+    (ertcheck-draw-bytes testdata 2)
+    (should
+     (equal (ertcheck-testdata-blocks testdata)
+            '((0 . 2))))))

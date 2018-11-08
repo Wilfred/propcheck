@@ -63,8 +63,8 @@ it to TESTDATA and return it."
          (new-i (+ i num-bytes)))
     ;; Update i to record our position in the bytes.
     (setf (ertcheck-testdata-i testdata) new-i)
-    ;; Store which regions of data were accessed, as inclusive ranges.
-    (push (cons i (1- new-i)) (ertcheck-testdata-blocks testdata))
+    ;; Store which regions of data were accessed, as ranges.
+    (push (cons i new-i) (ertcheck-testdata-blocks testdata))
 
     (if (ertcheck-testdata-frozen testdata)
         ;; TESTDATA was previously generated, just return the bytes we
