@@ -90,8 +90,9 @@ it to TESTDATA and return it."
 (defun ertcheck--freeze (testdata)
   "Return a frozen copy of TESTDATA, which we can use to shrink."
   (let ((i (ertcheck-testdata-i testdata))
-        (bytes (ertcheck-testdata-bytes testdata)))
-    (ertcheck-testdata (-take i bytes) 0 t)))
+        (bytes (ertcheck-testdata-bytes testdata))
+        (blocks (ertcheck-testdata-blocks testdata)))
+    (ertcheck-testdata (-take i bytes) 0 blocks t)))
 
 (defun ertcheck--set-byte (testdata i value)
   "Return a copy of TESTDATA with byte I set to VALUE."

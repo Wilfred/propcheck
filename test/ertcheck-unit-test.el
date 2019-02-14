@@ -36,3 +36,9 @@
     (should
      (equal (ertcheck-testdata-blocks ertcheck--testdata)
             '((0 . 2))))))
+
+(ert-deftest ertcheck--freeze ()
+  (let* ((testdata (ertcheck-testdata))
+         (frozen-testdata (ertcheck--freeze testdata)))
+    (should (ertcheck-testdata-frozen frozen-testdata))
+    (should (not (ertcheck-testdata-frozen testdata)))))
