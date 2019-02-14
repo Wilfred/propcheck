@@ -72,14 +72,14 @@ attempts."
     ertcheck--testdata))
 
 (defun ertcheck-demo-max-pair ()
-  (let ((testdata (ertcheck-harness #'ertcheck-max-pair-predicate)))
+  (let ((minimal-testdata (ertcheck-harness #'ertcheck-max-pair-predicate)))
     (message "Shrunk example: %S\nx: %s y: %s"
-             testdata
-             (ertcheck-generate-integer)
-             (ertcheck-generate-integer))))
+             minimal-testdata
+             (ertcheck--generate-integer minimal-testdata)
+             (ertcheck--generate-integer minimal-testdata))))
 
 (defun ertcheck-demo-max-item ()
-  (let ((testdata (ertcheck-harness #'ertcheck-max-items-predicate)))
+  (let ((minimal-testdata (ertcheck-harness #'ertcheck-max-items-predicate)))
     (message "Shrunk example: %S\nitems: %s"
-             testdata
+             minimal-testdata
              (ertcheck-generate-list #'ertcheck-generate-integer))))
