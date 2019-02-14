@@ -1,5 +1,24 @@
 (require 'ertcheck)
 
+(defun ertcheck-buggy-zerop (num)
+  ;; Return t for all values >= 0!
+  (if (< num 0)
+      nil
+    t))
+
+(defun ertcheck-zerop-predicate ()
+  (let* ((i (ertcheck-generate-integer))
+         (result (ertcheck-buggy-zerop i)))
+    ;; If `zerop' returns t, we should also return t, otherwise we
+    ;; should return false.
+    (if (zerop i) result (not result))))
+
+(defun ertcheck-demo-zerop ()
+  (let ((testdata (ertcheck-harness #'ertcheck-zerop-predicate)))
+    (message "Shrunk example: %S\ni: %s"
+             testdata
+             (ertcheck-generate-integer))))
+
 (defun ertcheck-buggy-max-pair (x y)
   (if (< x 101)
       ;; Correct implementation.
