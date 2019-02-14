@@ -46,8 +46,10 @@
 (defun ertcheck-max-items-predicate ()
   (let* ((items (ertcheck-generate-list #'ertcheck-generate-integer))
          (result (ertcheck-buggy-max-item items)))
-    (eq (car (-sort #'> items))
-        result)))
+    (if items
+        (eq (car (-sort #'> items))
+            result)
+      t)))
 
 (defun ertcheck-harness (valid-p)
   "Call VALID-P repeatedly, and return a small testdata where
