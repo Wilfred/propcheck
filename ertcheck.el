@@ -56,7 +56,11 @@
   blocks
   frozen)
 
-(defun ertcheck-draw-bytes (testdata num-bytes)
+(defvar ertcheck--testdata
+  (ertcheck-testdata)
+  "The current testdata instance being used to generate values.")
+
+(defun ertcheck--draw-bytes (testdata num-bytes)
   "Get NUM-BYTES of random data (generating if necessary), write
 it to TESTDATA and return it."
   (let* ((i (ertcheck-testdata-i testdata))
@@ -83,13 +87,13 @@ it to TESTDATA and return it."
                        rand-bytes))
         rand-bytes))))
 
-(defun ertcheck-freeze (testdata)
+(defun ertcheck--freeze (testdata)
   "Return a frozen copy of TESTDATA, which we can use to shrink."
   (let ((i (ertcheck-testdata-i testdata))
         (bytes (ertcheck-testdata-bytes testdata)))
     (ertcheck-testdata (-take i bytes) 0 t)))
 
-(defun ertcheck-testdata-set-byte (testdata i value)
+(defun ertcheck--set-byte (testdata i value)
   "Return a copy of TESTDATA with byte I set to VALUE."
   (let ((bytes (ertcheck-testdata-bytes testdata)))
     (ertcheck-testdata
@@ -98,16 +102,16 @@ it to TESTDATA and return it."
      (ertcheck-testdata-frozen testdata)
      (ertcheck-testdata-blocks testdata))))
 
-(defun ertcheck-shrink (testdata predicate)
+(defun ertcheck--shrink (testdata predicate)
   "Attempt to find a smaller version of TESTDATA where predicate
 still returns t. PREDICATE should be a function that takes a
 `ertcheck-testdata' and returns nil or t."
   (-> testdata
-      (ertcheck-shrink--zero predicate)
-      (ertcheck-shrink--divide predicate)
-      (ertcheck-shrink--decrement predicate)))
+      (ertcheck--shrink-zero predicate)
+      (ertcheck--shrink-divide predicate)
+      (ertcheck--shrink-decrement predicate)))
 
-(defun ertcheck-shrink--zero (testdata predicate)
+(defun ertcheck--shrink-zero (testdata predicate)
   "Shrink TESTDATA by zeroing bytes."
   (let ((attempts 0)
         (changed t))
@@ -117,14 +121,14 @@ still returns t. PREDICATE should be a function that takes a
       (--each-indexed (ertcheck-testdata-bytes testdata)
         (unless (zerop it)
           (cl-incf attempts)
-          (let ((new-testdata
-                 (ertcheck-testdata-set-byte testdata it-index 0)))
-            (setq changed (funcall predicate new-testdata))
+          (let ((ertcheck--testdata
+                 (ertcheck--set-byte testdata it-index 0)))
+            (setq changed (funcall predicate))
             (when changed
-              (setq testdata (ertcheck-freeze new-testdata))))))))
+              (setq testdata (ertcheck--freeze ertcheck--testdata))))))))
   testdata)
 
-(defun ertcheck-shrink--divide (testdata predicate)
+(defun ertcheck--shrink-divide (testdata predicate)
   "Attempt to shrink TESTDATA by halving each byte."
   (let ((attempts 0)
         (changed t))
@@ -134,14 +138,14 @@ still returns t. PREDICATE should be a function that takes a
       (--each-indexed (ertcheck-testdata-bytes testdata)
         (unless (or (eq it 0) (eq it 1))
           (cl-incf attempts)
-          (let ((new-testdata
-                 (ertcheck-testdata-set-byte testdata it-index (/ it 2))))
-            (setq changed (funcall predicate new-testdata))
+          (let ((ertcheck--testdata
+                 (ertcheck--set-byte testdata it-index (/ it 2))))
+            (setq changed (funcall predicate))
             (when changed
-              (setq testdata (ertcheck-freeze new-testdata))))))))
+              (setq testdata (ertcheck--freeze ertcheck--testdata))))))))
   testdata)
 
-(defun ertcheck-shrink--decrement (testdata predicate)
+(defun ertcheck--shrink-decrement (testdata predicate)
   "Attempt to shrink TESTDATA by decrementing each byte."
   (let ((attempts 0)
         (changed t)
@@ -152,28 +156,34 @@ still returns t. PREDICATE should be a function that takes a
       (--each-indexed bytes
         (unless (zerop it)
           (cl-incf attempts)
-          (let ((new-testdata
-                 (ertcheck-testdata-set-byte testdata it-index (1- it))))
+          (let ((ertcheck--testdata
+                 (ertcheck--set-byte testdata it-index (1- it))))
             ;; Try incrementing the next byte too.
             (when (and (eq it 1) (> (length bytes) (1+ it-index)))
-              (setq new-testdata
-                    (ertcheck-testdata-set-byte
-                     new-testdata
+              (setq ertcheck--testdata
+                    (ertcheck--set-byte
+                     ertcheck--testdata
                      (1+ it-index)
                      (1+ (nth (1+ it-index) bytes)))))
-            (setq changed (funcall predicate new-testdata))
+            (setq changed (funcall predicate))
             (when changed
-              (setq testdata (ertcheck-freeze new-testdata))))))))
+              (setq testdata (ertcheck--freeze ertcheck--testdata))))))))
   testdata)
 
-(defun ertcheck-generate-bool (testdata)
-  (let ((rand-byte (car (ertcheck-draw-bytes testdata 1))))
+(defun ertcheck-generate-bool ()
+  (ertcheck--generate-bool ertcheck--testdata))
+
+(defun ertcheck--generate-bool (testdata)
+  (let ((rand-byte (car (ertcheck--draw-bytes testdata 1))))
     (not (zerop (logand rand-byte 1)))))
 
-(defun ertcheck-generate-integer (testdata)
+(defun ertcheck-generate-integer ()
+  (ertcheck--generate-integer ertcheck--testdata))
+
+(defun ertcheck--generate-integer (testdata)
   (let* ((bits-in-integers (1+ (log most-positive-fixnum 2)))
          (bytes-needed (ceiling (/ bits-in-integers 8.0)))
-         (rand-bytes (ertcheck-draw-bytes testdata bytes-needed))
+         (rand-bytes (ertcheck--draw-bytes testdata bytes-needed))
          (result 0))
     (dolist (byte rand-bytes)
       (setq result
@@ -181,11 +191,16 @@ still returns t. PREDICATE should be a function that takes a
                byte)))
     result))
 
-(defun ertcheck-generate-ascii-char (testdata)
+(defun ertcheck-generate-ascii-char ()
+  "Generate a number that's an ASCII char.
+Note that elisp does not have a separate character type."
+  (ertcheck--generate-ascii-char ertcheck--testdata))
+
+(defun ertcheck--generate-ascii-char (testdata)
   "Generate a number that's an ASCII char.
 Note that elisp does not have a separate character type."
   ;; between 32 and 126
-  (let* ((rand-bytes (ertcheck-draw-bytes testdata 1))
+  (let* ((rand-bytes (ertcheck--draw-bytes testdata 1))
          (byte (car rand-bytes))
          (min-ascii 32)
          (max-ascii 126)
@@ -193,29 +208,41 @@ Note that elisp does not have a separate character type."
     (+ min-ascii (mod byte ascii-range))))
 
 ;; TODO: circular lists, improprer lists/trees.
-(defun ertcheck-generate-list (testdata item-generator)
+(defun ertcheck-generate-list (item-generator)
+  "Generate a list whose items are drawn from ITEM-GENERATOR."
+  (ertcheck--generate-list ertcheck--testdata item-generator))
+
+(defun ertcheck--generate-list (testdata item-generator)
   "Generate a list whose items are drawn from ITEM-GENERATOR."
   (let ((result nil))
     ;; Dumb: 75% chance of making the list bigger on each draw.
     ;; See utils.py/more in Hypothesis for a smarter approach.
-    (while (>= (car (ertcheck-draw-bytes testdata 1)) 64)
-      (push (funcall item-generator testdata) result))
+    (while (>= (car (ertcheck--draw-bytes testdata 1)) 64)
+      (push (funcall item-generator) result))
     result))
 
-(defun ertcheck-generate-vector (testdata item-generator)
+(defun ertcheck-generate-vector (item-generator)
+  "Generate a vector whose items are drawn from ITEM-GENERATOR."
+  (ertcheck--generate-vector ertcheck--testdata item-generator))
+
+(defun ertcheck--generate-vector (testdata item-generator)
   "Generate a vector whose items are drawn from ITEM-GENERATOR."
   (apply #'vector
-         (ertcheck-generate-list testdata item-generator)))
+         (ertcheck--generate-list testdata item-generator)))
 
-(defun ertcheck-generate-string (testdata)
+(defun ertcheck-generate-string ()
+  "Generate an ASCII string."
+  (ertcheck--generate-string ertcheck--testdata))
+
+(defun ertcheck--generate-string (testdata)
   "Generate a string using TESTDATA."
   (let ((chars nil))
     ;; Dumb: 75% chance of making the string bigger on each draw.
     ;; TODO: see what hypothesis does
     ;; TODO: multibyte support, key sequence support
-    (while (>= (car (ertcheck-draw-bytes testdata 1)) 64)
+    (while (>= (car (ertcheck--draw-bytes testdata 1)) 64)
       (push
-       (ertcheck-generate-ascii-char testdata)
+       (ertcheck--generate-ascii-char testdata)
        chars))
     (concat chars)))
 
