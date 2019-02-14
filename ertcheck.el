@@ -115,6 +115,8 @@ still returns t. PREDICATE should be a function that takes a
   "Shrink TESTDATA by zeroing bytes."
   (let ((attempts 0)
         (changed t))
+    ;; TODO: should this decrement max shrinks across all the shrink
+    ;; functions?
     (while (and changed (< attempts ertcheck-max-shrinks))
       (setq changed nil)
 
