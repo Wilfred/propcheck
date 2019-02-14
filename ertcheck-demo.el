@@ -29,35 +29,46 @@
 (defun ertcheck-buggy-max-item (items)
   (car items))
 
-;; Predicates return true on counter examples.
+;; Predicates return true if the function did the right thing with the
+;; input given.
 
 (defun ertcheck-max-pair-predicate ()
   (let* ((x (ertcheck-generate-integer))
          (y (ertcheck-generate-integer))
          (result (ertcheck-buggy-max-pair x y)))
-    (and (< x y) (not (eq result y)))))
+    ;; If x was less than y,
+    (if (< x y)
+        ;; we should have returned y.
+        (eq result y)
+      ;; Don't check the case when x is greater than y.
+      t)))
 
 (defun ertcheck-max-items-predicate ()
   (let* ((items (ertcheck-generate-list #'ertcheck-generate-integer))
          (result (ertcheck-buggy-max-item items)))
-    (not (eq (car (-sort #'> items))
-             result))))
+    (eq (car (-sort #'> items))
+        result)))
 
-(defun ertcheck-harness (predicate)
+(defun ertcheck-harness (valid-p)
+  "Call VALID-P repeatedly, and return a small testdata where
+VALID-P returns nil.
+
+Returns nil if VALID-P passes all `ertcheck-max-examples'
+attempts."
   (let ((ertcheck--testdata nil)
         (found-example nil))
     (catch 'found-example
       ;; Search for an example.
       (dotimes (_ ertcheck-max-examples)
         (setq ertcheck--testdata (ertcheck-testdata))
-        (setq found-example (funcall predicate))
+        (setq found-example (not (funcall valid-p)))
         (setq ertcheck--testdata (ertcheck--freeze ertcheck--testdata))
         (when found-example
           (throw 'found-example t))))
     (when found-example
       (message "Found initial example: %S" ertcheck--testdata)
       (setq ertcheck--testdata
-            (ertcheck--shrink ertcheck--testdata predicate)))
+            (ertcheck--shrink ertcheck--testdata valid-p)))
     ertcheck--testdata))
 
 (defun ertcheck-demo-max-pair ()

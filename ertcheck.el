@@ -103,16 +103,18 @@ it to TESTDATA and return it."
      (ertcheck-testdata-frozen testdata)
      (ertcheck-testdata-blocks testdata))))
 
-(defun ertcheck--shrink (testdata predicate)
-  "Attempt to find a smaller version of TESTDATA where predicate
-still returns t. PREDICATE should be a function that takes a
-`ertcheck-testdata' and returns nil or t."
-  (-> testdata
-      (ertcheck--shrink-zero predicate)
-      (ertcheck--shrink-divide predicate)
-      (ertcheck--shrink-decrement predicate)))
+(defun ertcheck--shrink (testdata valid-p)
+  "Attempt to find a smaller version of TESTDATA where VALID-P
+still returns nil.
 
-(defun ertcheck--shrink-zero (testdata predicate)
+VALID-P should be a predicate function that takes no arguments
+and returns nil or t."
+  (-> testdata
+      (ertcheck--shrink-zero valid-p)
+      (ertcheck--shrink-divide valid-p)
+      (ertcheck--shrink-decrement valid-p)))
+
+(defun ertcheck--shrink-zero (testdata valid-p)
   "Shrink TESTDATA by zeroing bytes."
   (let ((attempts 0)
         (changed t))
@@ -126,12 +128,12 @@ still returns t. PREDICATE should be a function that takes a
           (cl-incf attempts)
           (let ((ertcheck--testdata
                  (ertcheck--set-byte testdata it-index 0)))
-            (setq changed (funcall predicate))
+            (setq changed (not (funcall valid-p)))
             (when changed
               (setq testdata (ertcheck--freeze ertcheck--testdata))))))))
   testdata)
 
-(defun ertcheck--shrink-divide (testdata predicate)
+(defun ertcheck--shrink-divide (testdata valid-p)
   "Attempt to shrink TESTDATA by halving each byte."
   (let ((attempts 0)
         (changed t))
@@ -143,12 +145,12 @@ still returns t. PREDICATE should be a function that takes a
           (cl-incf attempts)
           (let ((ertcheck--testdata
                  (ertcheck--set-byte testdata it-index (/ it 2))))
-            (setq changed (funcall predicate))
+            (setq changed (not (funcall valid-p)))
             (when changed
               (setq testdata (ertcheck--freeze ertcheck--testdata))))))))
   testdata)
 
-(defun ertcheck--shrink-decrement (testdata predicate)
+(defun ertcheck--shrink-decrement (testdata valid-p)
   "Attempt to shrink TESTDATA by decrementing each byte."
   (let ((attempts 0)
         (changed t)
@@ -168,7 +170,7 @@ still returns t. PREDICATE should be a function that takes a
                      ertcheck--testdata
                      (1+ it-index)
                      (1+ (nth (1+ it-index) bytes)))))
-            (setq changed (funcall predicate))
+            (setq changed (not (funcall valid-p)))
             (when changed
               (setq testdata (ertcheck--freeze ertcheck--testdata))))))))
   testdata)
