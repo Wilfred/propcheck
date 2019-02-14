@@ -6,6 +6,15 @@
     (should
      (zerop (ertcheck--generate-integer testdata)))))
 
+(ert-deftest ertcheck--generate-list ()
+  (let* ((testdata (ertcheck-testdata
+                    (make-list 8 0) 0 nil t))
+         (nums
+          (ertcheck--generate-list testdata #'ertcheck-generate-integer)))
+    (dolist (num nums)
+      (should
+       (integerp num)))))
+
 (ert-deftest ertcheck--shrink ()
   (let* ((ertcheck--testdata (ertcheck-testdata
                               '(255) 0 nil t))
