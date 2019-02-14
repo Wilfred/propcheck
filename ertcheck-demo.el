@@ -13,6 +13,7 @@
     ;; should return false.
     (if (zerop i) result (not result))))
 
+;; Expecting counterexample: 1.
 (defun ertcheck-demo-zerop ()
   (let ((minimal-testdata (ertcheck-harness #'ertcheck-zerop-predicate)))
     (message "Shrunk example: %S\ni: %s"
@@ -73,6 +74,7 @@ attempts."
             (ertcheck--shrink ertcheck--testdata valid-p)))
     ertcheck--testdata))
 
+;; TODO: Expecting counterexample: 101, 102
 (defun ertcheck-demo-max-pair ()
   (let ((minimal-testdata (ertcheck-harness #'ertcheck-max-pair-predicate)))
     (message "Shrunk example: %S\nx: %s y: %s"
@@ -80,6 +82,7 @@ attempts."
              (ertcheck--generate-integer minimal-testdata)
              (ertcheck--generate-integer minimal-testdata))))
 
+;; TODO: Expecting counterexample: '(1 2)
 (defun ertcheck-demo-max-item ()
   (let ((minimal-testdata (ertcheck-harness #'ertcheck-max-items-predicate)))
     (message "Shrunk example: %S\nitems: %s"
