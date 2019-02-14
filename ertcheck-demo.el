@@ -14,10 +14,10 @@
     (if (zerop i) result (not result))))
 
 (defun ertcheck-demo-zerop ()
-  (let ((testdata (ertcheck-harness #'ertcheck-zerop-predicate)))
+  (let ((minimal-testdata (ertcheck-harness #'ertcheck-zerop-predicate)))
     (message "Shrunk example: %S\ni: %s"
-             testdata
-             (ertcheck-generate-integer))))
+             minimal-testdata
+             (ertcheck--generate-integer minimal-testdata))))
 
 (defun ertcheck-buggy-max-pair (x y)
   (if (< x 101)
