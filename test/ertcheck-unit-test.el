@@ -22,7 +22,7 @@
                       ;; We need to draw a byte or shrinking will give
                       ;; us an empty testdata.
                       (ertcheck--draw-bytes ertcheck--testdata 1)
-                      t))
+                      nil))
          (shrunk (ertcheck--shrink ertcheck--testdata predicate)))
     (should
      (equal (ertcheck-testdata-bytes shrunk)
