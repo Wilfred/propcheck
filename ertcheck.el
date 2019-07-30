@@ -34,6 +34,7 @@
 ;;; Code:
 
 (require 'dash)
+(require 'ert)
 (eval-when-compile
   (require 'cl))
 
@@ -250,6 +251,80 @@ Note that elisp does not have a separate character type."
        (ertcheck--generate-ascii-char testdata)
        chars))
     (concat chars)))
+
+(defun ertcheck--should (valid-p)
+  (unless valid-p
+    (throw 'counterexample ertcheck--testdata)))
+
+(defun ertcheck--find-counterexample (fun)
+  "Call FUN until it finds a counterexample.
+
+Returns the frozen testdata that produced the counterexample, or
+nil if no counterexamples were found after
+`ertcheck-max-examples' attempts."
+  (let ((td
+         (catch 'counterexample
+           (dotimes (_ ertcheck-max-examples)
+             ;; Generate a fresh testdata and try the function.
+             (let ((ertcheck--testdata (ertcheck-testdata)))
+               (funcall fun)))
+           nil)))
+    (ertcheck--freeze td)))
+
+(defun ertcheck--harness (fun-body)
+  "Call VALID-P repeatedly, and return a small testdata where
+VALID-P returns nil.
+
+Returns nil if VALID-P passes all `ertcheck-max-examples'
+attempts."
+  (let ((ertcheck--testdata nil)
+        (found-example nil))
+    (catch 'found-example
+      ;; Search for an example.
+      (dotimes (_ ertcheck-max-examples)
+        (setq ertcheck--testdata (ertcheck-testdata))
+        (setq found-example (not (funcall valid-p)))
+        (setq ertcheck--testdata (ertcheck--freeze ertcheck--testdata))
+        (when found-example
+          (throw 'found-example t))))
+    (when found-example
+      (message "Found initial example: %S" ertcheck--testdata)
+      (setq ertcheck--testdata
+            (ertcheck--shrink ertcheck--testdata valid-p)))
+    ertcheck--testdata))
+
+(cl-defmacro ertcheck-deftest (name () &body docstring-keys-and-body)
+  (declare (debug (&define :name test
+                           name sexp [&optional stringp]
+			   [&rest keywordp sexp] def-body))
+           (doc-string 3)
+           (indent 2))
+  ;; TODO: just define a normal function.
+  ;; TODO: expanding the function should replace `should' calls.
+  ;; TODO: then define an ert test that calls it with the harness.
+  (let ((documentation nil)
+        (documentation-supplied-p nil))
+    (when (stringp (car docstring-keys-and-body))
+      (setq documentation (pop docstring-keys-and-body)
+            documentation-supplied-p t))
+    (cl-destructuring-bind
+        ((&key (expected-result nil expected-result-supplied-p)
+               (tags nil tags-supplied-p))
+         body)
+        (ert--parse-keys-and-body docstring-keys-and-body)
+      `(cl-macrolet ((should (form) `(ertcheck--should ,form))
+                     (skip-unless (form) `(ert--skip-unless ,form)))
+         (ert-set-test ',name
+                       (make-ert-test
+                        :name ',name
+                        ,@(when documentation-supplied-p
+                            `(:documentation ,documentation))
+                        ,@(when expected-result-supplied-p
+                            `(:expected-result-type ,expected-result))
+                        ,@(when tags-supplied-p
+                            `(:tags ,tags))
+                        :body (lambda () ,@body)))
+         ',name))))
 
 (provide 'ertcheck)
 ;;; ertcheck.el ends here

@@ -6,6 +6,26 @@
       nil
     t))
 
+(ertcheck-deftest wh-zerop ()
+  "foo"
+  (let* ((i (ertcheck-generate-integer))
+         (result (ertcheck-buggy-zerop i)))
+    ;; If `zerop' returns t, we should also return t, otherwise we
+    ;; should return false.
+    (should
+     (if (zerop i) result (not result)))))
+
+(defun wh-zerop ()
+  "foo"
+  (let* ((i (ertcheck-generate-integer))
+         (result (ertcheck-buggy-zerop i)))
+    ;; If `zerop' returns t, we should also return t, otherwise we
+    ;; should return false.
+    (ertcheck--should
+     (if (zerop i) result (not result)))))
+
+(ertcheck--find-counterexample #'wh-zerop)
+
 (defun ertcheck-zerop-predicate ()
   (let* ((i (ertcheck-generate-integer))
          (result (ertcheck-buggy-zerop i)))
