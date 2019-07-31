@@ -1,30 +1,24 @@
 (require 'ertcheck)
 
 (defun ertcheck-buggy-zerop (num)
-  ;; Return t for all values >= 0!
-  (if (< num 0)
-      nil
-    t))
-
-(ertcheck-deftest wh-zerop ()
-  "foo"
-  (let* ((i (ertcheck-generate-integer))
-         (result (ertcheck-buggy-zerop i)))
-    ;; If `zerop' returns t, we should also return t, otherwise we
-    ;; should return false.
-    (should
-     (if (zerop i) result (not result)))))
+  ;; Return t for all values >= 0, so our minimal example should be 1.
+  (>= num 0))
 
 (defun wh-zerop ()
-  "foo"
   (let* ((i (ertcheck-generate-integer))
          (result (ertcheck-buggy-zerop i)))
+    (message "i: %s result: %s zerop: %s should: %s"
+             i result (zerop i)
+             (if (zerop i) result (not result)))
     ;; If `zerop' returns t, we should also return t, otherwise we
     ;; should return false.
     (ertcheck--should
      (if (zerop i) result (not result)))))
 
-(ertcheck--find-counterexample #'wh-zerop)
+(let ((td (ertcheck--find-small-counterexample #'wh-zerop)))
+  (ertcheck--generate-integer td))
+
+(ertcheck--generate-integer ertcheck--testdata)
 
 (defun ertcheck-zerop-predicate ()
   (let* ((i (ertcheck-generate-integer))

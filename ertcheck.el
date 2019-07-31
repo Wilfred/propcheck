@@ -254,7 +254,8 @@ Note that elisp does not have a separate character type."
 
 (defun ertcheck--should (valid-p)
   (unless valid-p
-    (throw 'counterexample ertcheck--testdata)))
+    (throw 'counterexample
+           (ertcheck--freeze ertcheck--testdata))))
 
 (defun ertcheck--find-counterexample (fun)
   "Call FUN until it finds a counterexample.
@@ -269,7 +270,47 @@ nil if no counterexamples were found after
              (let ((ertcheck--testdata (ertcheck-testdata)))
                (funcall fun)))
            nil)))
-    (ertcheck--freeze td)))
+    td))
+
+(defvar ertcheck--shrinks-remaining nil)
+
+(defun ertcheck--shrink-zeroing (fun testdata)
+  "Shrink TESTDATA by zeroing bytes."
+  (let ((changed t))
+    ;; Keep going until we run out of shrinks, or we stop finding
+    ;; testdata values with more zeroes.
+    (catch 'out-of-shrinks
+      (while changed
+        (setq changed nil)
+
+        (--each-indexed (ertcheck-testdata-bytes testdata)
+          (unless (zerop it)
+            (cl-decf ertcheck--shrinks-remaining)
+            (unless (> ertcheck--shrinks-remaining 0)
+              (throw 'out-of-shrinks t))
+
+            (let ((ertcheck--testdata
+                   (ertcheck--set-byte testdata it-index 0))
+                  (new-testdata
+                   (catch 'counterexample
+                     (funcall fun)
+                     nil)))
+              (when new-testdata
+                (setq changed t)
+                (setq testdata new-testdata))))))))
+  testdata)
+
+(defun ertcheck--shrink-counterexample (fun td shrinks)
+  "Call FUN up to SHRINKS times, to find a smaller TD that still
+fails."
+  (let ((ertcheck--shrinks-remaining shrinks))
+    (ertcheck--shrink-zeroing fun td)))
+
+(defun ertcheck--find-small-counterexample (fun)
+  (let ((td
+         (ertcheck--find-counterexample fun)))
+    (when td
+      (ertcheck--shrink-counterexample fun td ertcheck-max-shrinks))))
 
 (defun ertcheck--harness (fun-body)
   "Call VALID-P repeatedly, and return a small testdata where
