@@ -104,8 +104,8 @@ it to TESTDATA and return it."
     (ertcheck-testdata
      (-replace-at i value bytes)
      (ertcheck-testdata-i testdata)
-     (ertcheck-testdata-frozen testdata)
-     (ertcheck-testdata-blocks testdata))))
+     (ertcheck-testdata-blocks testdata)
+     (ertcheck-testdata-frozen testdata))))
 
 (defun ertcheck--shrink (testdata valid-p)
   "Attempt to find a smaller version of TESTDATA where VALID-P
