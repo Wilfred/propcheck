@@ -58,12 +58,13 @@
   frozen)
 
 (defvar ertcheck--testdata
-  (ertcheck-testdata)
+  nil
   "The current testdata instance being used to generate values.")
 
 (defun ertcheck--draw-bytes (testdata num-bytes)
   "Get NUM-BYTES of random data (generating if necessary), write
 it to TESTDATA and return it."
+  (ertcheck--assert-td)
   (let* ((i (ertcheck-testdata-i testdata))
          (new-i (+ i num-bytes)))
     ;; Update i to record our position in the bytes.
@@ -270,9 +271,29 @@ nil if no counterexamples were found after
              (let ((ertcheck--testdata (ertcheck-testdata)))
                (funcall fun)))
            nil)))
-    td))
+    (when td
+      (ertcheck--freeze td))))
 
 (defvar ertcheck--shrinks-remaining nil)
+
+(defun ertcheck--assert-td ()
+  (unless ertcheck--testdata
+    (error "ertcheck--testdata must not be nil"))
+  (if ertcheck--shrinks-remaining
+      (progn
+        (unless (ertcheck-testdata-frozen ertcheck--testdata)
+          (error "Data should be frozen during shrinking"))
+        (unless (<
+                 (ertcheck-testdata-i ertcheck--testdata)
+                 (length (ertcheck-testdata-bytes ertcheck--testdata)))
+          (error "Data should be replayed during shrinking")))
+    (progn
+      (when (ertcheck-testdata-frozen ertcheck--testdata)
+        (error "Data should be frozen when finding counterexamples"))
+      (unless (=
+               (ertcheck-testdata-i ertcheck--testdata)
+               (length (ertcheck-testdata-bytes ertcheck--testdata)))
+        (error "Data should be growing when finding counterexamples")))))
 
 (defun ertcheck--shrink-zeroing (fun testdata)
   "Shrink TESTDATA by zeroing bytes."
