@@ -91,6 +91,8 @@ it to TESTDATA and return it."
 
 (defun ertcheck--freeze (testdata)
   "Return a frozen copy of TESTDATA, which we can use to shrink."
+  (when (ertcheck-testdata-frozen testdata)
+    (error "data already frozen"))
   (let ((i (ertcheck-testdata-i testdata))
         (bytes (ertcheck-testdata-bytes testdata))
         (blocks (ertcheck-testdata-blocks testdata)))
@@ -271,8 +273,7 @@ nil if no counterexamples were found after
              (let ((ertcheck--testdata (ertcheck-testdata)))
                (funcall fun)))
            nil)))
-    (when td
-      (ertcheck--freeze td))))
+    td))
 
 (defvar ertcheck--shrinks-remaining nil)
 
@@ -289,7 +290,7 @@ nil if no counterexamples were found after
           (error "Data should be replayed during shrinking")))
     (progn
       (when (ertcheck-testdata-frozen ertcheck--testdata)
-        (error "Data should be frozen when finding counterexamples"))
+        (error "Data should not be frozen when finding counterexamples"))
       (unless (=
                (ertcheck-testdata-i ertcheck--testdata)
                (length (ertcheck-testdata-bytes ertcheck--testdata)))
