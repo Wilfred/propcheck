@@ -98,6 +98,14 @@ it to TESTDATA and return it."
         (blocks (ertcheck-testdata-blocks testdata)))
     (ertcheck-testdata (-take i bytes) 0 blocks t)))
 
+(defun ertcheck--seek-start (testdata)
+  "Move i to the start of TESTDATA."
+  (unless (ertcheck-testdata-frozen testdata)
+    (error "data should be frozen"))
+  (let ((bytes (ertcheck-testdata-bytes testdata))
+        (blocks (ertcheck-testdata-blocks testdata)))
+    (ertcheck-testdata bytes 0 blocks t)))
+
 (defun ertcheck--set-byte (testdata i value)
   "Return a copy of TESTDATA with byte I set to VALUE."
   (let ((bytes (ertcheck-testdata-bytes testdata)))
@@ -258,7 +266,7 @@ Note that elisp does not have a separate character type."
 (defun ertcheck--should (valid-p)
   (unless valid-p
     (throw 'counterexample
-           (ertcheck--freeze ertcheck--testdata))))
+           ertcheck--testdata)))
 
 (defun ertcheck--find-counterexample (fun)
   "Call FUN until it finds a counterexample.
@@ -273,7 +281,8 @@ nil if no counterexamples were found after
              (let ((ertcheck--testdata (ertcheck-testdata)))
                (funcall fun)))
            nil)))
-    td))
+    (when td
+      (ertcheck--freeze td))))
 
 (defvar ertcheck--shrinks-remaining nil)
 
@@ -311,15 +320,16 @@ nil if no counterexamples were found after
             (unless (> ertcheck--shrinks-remaining 0)
               (throw 'out-of-shrinks t))
 
-            (let ((ertcheck--testdata
-                   (ertcheck--set-byte testdata it-index 0))
-                  (new-testdata
-                   (catch 'counterexample
-                     (funcall fun)
-                     nil)))
+            (let* ((ertcheck--testdata
+                    (ertcheck--set-byte testdata it-index 0))
+                   (new-testdata
+                    (catch 'counterexample
+                      (funcall fun)
+                      nil)))
               (when new-testdata
                 (setq changed t)
-                (setq testdata new-testdata))))))))
+                (setq testdata
+                      (ertcheck--seek-start new-testdata)))))))))
   testdata)
 
 (defun ertcheck--shrink-counterexample (fun td shrinks)
