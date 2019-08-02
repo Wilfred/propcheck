@@ -332,6 +332,33 @@ nil if no counterexamples were found after
                       (ertcheck--seek-start new-testdata)))))))))
   testdata)
 
+(defun ertcheck--shrink-decrementing (fun testdata)
+  "Shrink TESTDATA by decrementing bytes."
+  (let ((changed t))
+    ;; Keep going until we run out of shrinks, or we stop finding
+    ;; testdata values with more zeroes.
+    (catch 'out-of-shrinks
+      (while changed
+        (setq changed nil)
+
+        (--each-indexed (ertcheck-testdata-bytes testdata)
+          (unless (zerop it)
+            (cl-decf ertcheck--shrinks-remaining)
+            (unless (> ertcheck--shrinks-remaining 0)
+              (throw 'out-of-shrinks t))
+
+            (let* ((ertcheck--testdata
+                    (ertcheck--set-byte testdata it-index (1- it)))
+                   (new-testdata
+                    (catch 'counterexample
+                      (funcall fun)
+                      nil)))
+              (when new-testdata
+                (setq changed t)
+                (setq testdata
+                      (ertcheck--seek-start new-testdata)))))))))
+  testdata)
+
 (defun ertcheck--shrink-zeroing (fun testdata)
   "Shrink TESTDATA by zeroing bytes."
   (let ((changed t))
@@ -349,6 +376,15 @@ nil if no counterexamples were found after
 
             (let* ((ertcheck--testdata
                     (ertcheck--set-byte testdata it-index 0))
+                   (bytes
+                    (ertcheck-testdata-bytes ertcheck--testdata))
+                   (ertcheck--testdata
+                    (if (and (eq it 1) (> (length bytes) (1+ it-index)))
+                        (ertcheck--set-byte
+                         ertcheck--testdata
+                         (1+ it-index)
+                         (1+ (nth (1+ it-index) bytes)))
+                      ertcheck--testdata))
                    (new-testdata
                     (catch 'counterexample
                       (funcall fun)
@@ -366,7 +402,8 @@ fails."
          )
     (->> td
          (ertcheck--shrink-zeroing fun)
-         (ertcheck--shrink-halving fun))))
+         (ertcheck--shrink-halving fun)
+         (ertcheck--shrink-decrementing fun))))
 
 (defun ertcheck--find-small-counterexample (fun)
   (let ((td
