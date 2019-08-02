@@ -305,6 +305,33 @@ nil if no counterexamples were found after
                (length (ertcheck-testdata-bytes ertcheck--testdata)))
         (error "Data should be growing when finding counterexamples")))))
 
+(defun ertcheck--shrink-halving (fun testdata)
+  "Attempt to shrink TESTDATA by halving each byte."
+  (let ((changed t))
+    ;; Keep going until we run out of shrinks, or we stop finding
+    ;; testdata values with more zeroes.
+    (catch 'out-of-shrinks
+      (while changed
+        (setq changed nil)
+
+        (--each-indexed (ertcheck-testdata-bytes testdata)
+          (unless (or (eq it 0) (eq it 1))
+            (cl-decf ertcheck--shrinks-remaining)
+            (unless (> ertcheck--shrinks-remaining 0)
+              (throw 'out-of-shrinks t))
+
+            (let* ((ertcheck--testdata
+                    (ertcheck--set-byte testdata it-index (/ it 2)))
+                   (new-testdata
+                    (catch 'counterexample
+                      (funcall fun)
+                      nil)))
+              (when new-testdata
+                (setq changed t)
+                (setq testdata
+                      (ertcheck--seek-start new-testdata)))))))))
+  testdata)
+
 (defun ertcheck--shrink-zeroing (fun testdata)
   "Shrink TESTDATA by zeroing bytes."
   (let ((changed t))
@@ -335,8 +362,11 @@ nil if no counterexamples were found after
 (defun ertcheck--shrink-counterexample (fun td shrinks)
   "Call FUN up to SHRINKS times, to find a smaller TD that still
 fails."
-  (let ((ertcheck--shrinks-remaining shrinks))
-    (ertcheck--shrink-zeroing fun td)))
+  (let* ((ertcheck--shrinks-remaining shrinks)
+         )
+    (->> td
+         (ertcheck--shrink-zeroing fun)
+         (ertcheck--shrink-halving fun))))
 
 (defun ertcheck--find-small-counterexample (fun)
   (let ((td
