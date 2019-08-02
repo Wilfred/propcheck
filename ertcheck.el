@@ -305,8 +305,9 @@ nil if no counterexamples were found after
                (length (ertcheck-testdata-bytes ertcheck--testdata)))
         (error "Data should be growing when finding counterexamples")))))
 
-(defun ertcheck--shrink-halving (fun testdata)
-  "Attempt to shrink TESTDATA by halving each byte."
+(defun ertcheck--shrink-by (test-fn shrink-fn testdata)
+  "Attempt to shrink TESTDATA by calling TEST-FN with smaller values.
+Reduce the size of TESTDATA by applying SHRINK-FN."
   (let ((changed t))
     ;; Keep going until we run out of shrinks, or we stop finding
     ;; testdata values with more zeroes.
@@ -314,86 +315,48 @@ nil if no counterexamples were found after
       (while changed
         (setq changed nil)
 
-        (--each-indexed (ertcheck-testdata-bytes testdata)
-          (unless (or (eq it 0) (eq it 1))
-            (cl-decf ertcheck--shrinks-remaining)
-            (unless (> ertcheck--shrinks-remaining 0)
-              (throw 'out-of-shrinks t))
+        (dotimes (i (length (ertcheck-testdata-bytes testdata)))
+          (let* ((shrunk-testdata
+                  (funcall shrink-fn testdata i)))
+            (when shrunk-testdata
+              (let* ((ertcheck--testdata shrunk-testdata)
+                     (new-testdata
+                      (catch 'counterexample
+                        (funcall test-fn)
+                        nil)))
+                (when new-testdata
+                  (setq changed t)
+                  (setq testdata
+                        (ertcheck--seek-start new-testdata))))
 
-            (let* ((ertcheck--testdata
-                    (ertcheck--set-byte testdata it-index (/ it 2)))
-                   (new-testdata
-                    (catch 'counterexample
-                      (funcall fun)
-                      nil)))
-              (when new-testdata
-                (setq changed t)
-                (setq testdata
-                      (ertcheck--seek-start new-testdata)))))))))
+              (cl-decf ertcheck--shrinks-remaining)
+              (unless (> ertcheck--shrinks-remaining 0)
+                (throw 'out-of-shrinks t))))))))
   testdata)
 
-(defun ertcheck--shrink-decrementing (fun testdata)
-  "Shrink TESTDATA by decrementing bytes."
-  (let ((changed t))
-    ;; Keep going until we run out of shrinks, or we stop finding
-    ;; testdata values with more zeroes.
-    (catch 'out-of-shrinks
-      (while changed
-        (setq changed nil)
+(defun ertcheck--zero-byte (testdata i)
+  "Set byte at I in TESTDATA to zero if it isn't already."
+  (let* ((bytes (ertcheck-testdata-bytes testdata))
+         (byte (nth i bytes)))
+    (unless (zerop byte)
+      (ertcheck--set-byte testdata i 0))))
 
-        (--each-indexed (ertcheck-testdata-bytes testdata)
-          (unless (zerop it)
-            (cl-decf ertcheck--shrinks-remaining)
-            (unless (> ertcheck--shrinks-remaining 0)
-              (throw 'out-of-shrinks t))
+(defun ertcheck--halve-byte (testdata i)
+  "Divide byte at I in TESTDATA by 2 if it will produce
+a different testdata."
+  (let* ((bytes (ertcheck-testdata-bytes testdata))
+         (byte (nth i bytes)))
+    (unless (or (eq byte 0) (eq byte 1))
+      (ertcheck--set-byte testdata i (/ byte 2)))))
 
-            (let* ((ertcheck--testdata
-                    (ertcheck--set-byte testdata it-index (1- it)))
-                   (new-testdata
-                    (catch 'counterexample
-                      (funcall fun)
-                      nil)))
-              (when new-testdata
-                (setq changed t)
-                (setq testdata
-                      (ertcheck--seek-start new-testdata)))))))))
-  testdata)
-
-(defun ertcheck--shrink-zeroing (fun testdata)
-  "Shrink TESTDATA by zeroing bytes."
-  (let ((changed t))
-    ;; Keep going until we run out of shrinks, or we stop finding
-    ;; testdata values with more zeroes.
-    (catch 'out-of-shrinks
-      (while changed
-        (setq changed nil)
-
-        (--each-indexed (ertcheck-testdata-bytes testdata)
-          (unless (zerop it)
-            (cl-decf ertcheck--shrinks-remaining)
-            (unless (> ertcheck--shrinks-remaining 0)
-              (throw 'out-of-shrinks t))
-
-            (let* ((ertcheck--testdata
-                    (ertcheck--set-byte testdata it-index 0))
-                   (bytes
-                    (ertcheck-testdata-bytes ertcheck--testdata))
-                   (ertcheck--testdata
-                    (if (and (eq it 1) (> (length bytes) (1+ it-index)))
-                        (ertcheck--set-byte
-                         ertcheck--testdata
-                         (1+ it-index)
-                         (1+ (nth (1+ it-index) bytes)))
-                      ertcheck--testdata))
-                   (new-testdata
-                    (catch 'counterexample
-                      (funcall fun)
-                      nil)))
-              (when new-testdata
-                (setq changed t)
-                (setq testdata
-                      (ertcheck--seek-start new-testdata)))))))))
-  testdata)
+(defun ertcheck--decrement-byte (testdata i)
+  "Divide byte at I in TESTDATA by 2 if it will produce
+a different testdata."
+  (let* ((bytes (ertcheck-testdata-bytes testdata))
+         (byte (nth i bytes)))
+    ;; TODO: should we increment the previous byte too?
+    (unless (zerop byte)
+      (ertcheck--set-byte testdata i (1- byte)))))
 
 (defun ertcheck--shrink-counterexample (fun td shrinks)
   "Call FUN up to SHRINKS times, to find a smaller TD that still
@@ -401,9 +364,9 @@ fails."
   (let* ((ertcheck--shrinks-remaining shrinks)
          )
     (->> td
-         (ertcheck--shrink-zeroing fun)
-         (ertcheck--shrink-halving fun)
-         (ertcheck--shrink-decrementing fun))))
+         (ertcheck--shrink-by fun #'ertcheck--zero-byte)
+         (ertcheck--shrink-by fun #'ertcheck--halve-byte)
+         (ertcheck--shrink-by fun #'ertcheck--decrement-byte))))
 
 (defun ertcheck--find-small-counterexample (fun)
   (let ((td
