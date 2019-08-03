@@ -50,11 +50,9 @@
                    (&optional
                     (bytes nil)
                     (i 0)
-                    (blocks nil)
                     (frozen nil))))
   bytes
   i
-  blocks
   frozen)
 
 (defvar ertcheck--testdata
@@ -69,8 +67,6 @@ it to TESTDATA and return it."
          (new-i (+ i num-bytes)))
     ;; Update i to record our position in the bytes.
     (setf (ertcheck-testdata-i testdata) new-i)
-    ;; Store which regions of data were accessed, as ranges.
-    (push (cons i new-i) (ertcheck-testdata-blocks testdata))
 
     (if (ertcheck-testdata-frozen testdata)
         ;; TESTDATA was previously generated, just return the bytes we
@@ -94,17 +90,15 @@ it to TESTDATA and return it."
   (when (ertcheck-testdata-frozen testdata)
     (error "data already frozen"))
   (let ((i (ertcheck-testdata-i testdata))
-        (bytes (ertcheck-testdata-bytes testdata))
-        (blocks (ertcheck-testdata-blocks testdata)))
-    (ertcheck-testdata (-take i bytes) 0 blocks t)))
+        (bytes (ertcheck-testdata-bytes testdata)))
+    (ertcheck-testdata (-take i bytes) 0 t)))
 
 (defun ertcheck--seek-start (testdata)
   "Move i to the start of TESTDATA."
   (unless (ertcheck-testdata-frozen testdata)
     (error "data should be frozen"))
-  (let ((bytes (ertcheck-testdata-bytes testdata))
-        (blocks (ertcheck-testdata-blocks testdata)))
-    (ertcheck-testdata bytes 0 blocks t)))
+  (let ((bytes (ertcheck-testdata-bytes testdata)))
+    (ertcheck-testdata bytes 0 t)))
 
 (defun ertcheck--set-byte (testdata i value)
   "Return a copy of TESTDATA with byte I set to VALUE."
@@ -112,7 +106,6 @@ it to TESTDATA and return it."
     (ertcheck-testdata
      (-replace-at i value bytes)
      (ertcheck-testdata-i testdata)
-     (ertcheck-testdata-blocks testdata)
      (ertcheck-testdata-frozen testdata))))
 
 (defun ertcheck-generate-bool ()
