@@ -13,7 +13,8 @@
      (if (zerop i) result (not result)))))
 
 ;; Expecting counterexample: 1.
-(let ((td (ertcheck--find-small-counterexample #'wh-zerop)))
+(let ((td (ertcheck--find-small-counterexample #'wh-zerop))
+      (ertcheck--shrinks-remaining t))
   (ertcheck--generate-integer td))
 
 (defun ertcheck-buggy-max-pair (x y)
@@ -36,7 +37,8 @@
       (ertcheck--should (eq result y)))))
 
 ;; TODO: Expecting counterexample: 101, 102
-(let ((td (ertcheck--find-small-counterexample #'ertcheck-max-pair-predicate)))
+(let ((td (ertcheck--find-small-counterexample #'ertcheck-max-pair-predicate))
+      (ertcheck--shrinks-remaining t))
   (list (ertcheck--generate-integer td)
         (ertcheck--generate-integer td)))
 
