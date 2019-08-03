@@ -253,6 +253,8 @@ Reduce the size of TESTDATA by applying SHRINK-FN."
               (cl-decf ertcheck--shrinks-remaining)
               (unless (> ertcheck--shrinks-remaining 0)
                 (throw 'out-of-shrinks t))))))))
+  (message "shrinks left: %d shrinker: %s"
+           ertcheck--shrinks-remaining shrink-fn)
   testdata)
 
 (defun ertcheck--zero-byte (testdata i)
