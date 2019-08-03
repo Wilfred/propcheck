@@ -267,9 +267,31 @@ Reduce the size of TESTDATA by applying SHRINK-FN."
 a different testdata."
   (let* ((bytes (ertcheck-testdata-bytes testdata))
          (byte (nth i bytes)))
-    ;; TODO: should we increment the previous byte too?
-    (unless (or (eq byte 0) (eq byte 1))
+    ;; Halving 1 to get 0 is pointless, because we've already tried
+    ;; zeroing this byte.
+    (when (> byte 1)
       (ertcheck--set-byte testdata i (/ byte 2)))))
+
+(defun ertcheck--divide-byte (testdata i amount)
+  "Divide byte at I in TESTDATA by AMOUNT if it will produce
+a different testdata."
+  (let* ((bytes (ertcheck-testdata-bytes testdata))
+         (byte (nth i bytes)))
+    ;; Halving 1 to get 0 is pointless, because we've already tried
+    ;; zeroing this byte.
+    (when (> byte 1)
+      (ertcheck--set-byte testdata i (/ byte amount)))))
+
+(defun ertcheck--halve-byte-with-carry (testdata i)
+  "Divide byte at I in TESTDATA by 2 if it will produce
+a different testdata."
+  (let* ((bytes (ertcheck-testdata-bytes testdata))
+         (byte (nth i bytes))
+         (next-byte (nth (1+ i) bytes)))
+    (when (and (> byte 0) next-byte (zerop next-byte))
+      (ertcheck--set-byte
+       (ertcheck--set-byte testdata i (/ byte 2))
+       (1+ i) 255))))
 
 (defun ertcheck--subtract-byte (testdata i amount)
   "subtract AMOUNT at I in TESTDATA."
@@ -277,6 +299,16 @@ a different testdata."
          (byte (nth i bytes)))
     (when (> byte amount)
       (ertcheck--set-byte testdata i (- byte amount)))))
+
+(defun ertcheck--subtract-byte-with-carry (testdata i amount)
+  "subtract AMOUNT at I in TESTDATA."
+  (let* ((bytes (ertcheck-testdata-bytes testdata))
+         (byte (nth i bytes))
+         (next-byte (nth (1+ i) bytes)))
+    (when (and (>= byte amount) next-byte)
+      (ertcheck--set-byte
+       (ertcheck--set-byte testdata i (- byte amount))
+       (1+ i) 255))))
 
 (defun ertcheck--shrink-counterexample (fun td shrinks)
   "Call FUN up to SHRINKS times, to find a smaller TD that still
@@ -286,7 +318,13 @@ fails."
     (->> td
          (ertcheck--shrink-by fun #'ertcheck--zero-byte)
          (ertcheck--shrink-by fun #'ertcheck--halve-byte)
+         (ertcheck--shrink-by fun #'ertcheck--halve-byte-with-carry)
+         (ertcheck--shrink-by fun #'ertcheck--halve-byte)
+         (ertcheck--shrink-by fun (-rpartial #'ertcheck--subtract-byte-with-carry 50))
+         (ertcheck--shrink-by fun (-rpartial #'ertcheck--subtract-byte 50))
+         (ertcheck--shrink-by fun (-rpartial #'ertcheck--subtract-byte-with-carry 10))
          (ertcheck--shrink-by fun (-rpartial #'ertcheck--subtract-byte 10))
+         (ertcheck--shrink-by fun (-rpartial #'ertcheck--subtract-byte-with-carry 1))
          (ertcheck--shrink-by fun (-rpartial #'ertcheck--subtract-byte 1)))))
 
 (defun ertcheck--find-small-counterexample (fun)
