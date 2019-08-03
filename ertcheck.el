@@ -267,17 +267,16 @@ Reduce the size of TESTDATA by applying SHRINK-FN."
 a different testdata."
   (let* ((bytes (ertcheck-testdata-bytes testdata))
          (byte (nth i bytes)))
+    ;; TODO: should we increment the previous byte too?
     (unless (or (eq byte 0) (eq byte 1))
       (ertcheck--set-byte testdata i (/ byte 2)))))
 
-(defun ertcheck--decrement-byte (testdata i)
-  "Divide byte at I in TESTDATA by 2 if it will produce
-a different testdata."
+(defun ertcheck--subtract-byte (testdata i amount)
+  "subtract AMOUNT at I in TESTDATA."
   (let* ((bytes (ertcheck-testdata-bytes testdata))
          (byte (nth i bytes)))
-    ;; TODO: should we increment the previous byte too?
-    (unless (zerop byte)
-      (ertcheck--set-byte testdata i (1- byte)))))
+    (when (> byte amount)
+      (ertcheck--set-byte testdata i (- byte amount)))))
 
 (defun ertcheck--shrink-counterexample (fun td shrinks)
   "Call FUN up to SHRINKS times, to find a smaller TD that still
@@ -287,7 +286,8 @@ fails."
     (->> td
          (ertcheck--shrink-by fun #'ertcheck--zero-byte)
          (ertcheck--shrink-by fun #'ertcheck--halve-byte)
-         (ertcheck--shrink-by fun #'ertcheck--decrement-byte))))
+         (ertcheck--shrink-by fun (-rpartial #'ertcheck--subtract-byte 10))
+         (ertcheck--shrink-by fun (-rpartial #'ertcheck--subtract-byte 1)))))
 
 (defun ertcheck--find-small-counterexample (fun)
   (let ((td
