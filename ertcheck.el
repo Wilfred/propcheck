@@ -40,7 +40,7 @@
 
 (defvar ertcheck-max-examples 100)
 ;; What does hypothesis do?
-(defvar ertcheck-max-shrinks 50)
+(defvar ertcheck-max-shrinks 200)
 
 ;; A consumable sequence of bytes used to generate test values.
 (defstruct
