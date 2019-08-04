@@ -108,7 +108,7 @@
 
 (defun propcheck--zerop-examples ()
   (let (examples)
-    (dotimes (_ 10)
+    (dotimes (_ 20)
       (let* ((found-seed
               (propcheck--find-small-counterexample #'propcheck--buggy-zerop-test))
              (propcheck--seed found-seed)

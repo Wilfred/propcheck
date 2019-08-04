@@ -39,7 +39,7 @@
 
 (defvar propcheck-max-examples 100)
 ;; What values does hypothesis use?
-(defvar propcheck-max-shrinks 200)
+(defvar propcheck-max-shrinks 100)
 (defvar propcheck--shrinks-remaining nil)
 (defvar propcheck--allow-replay nil)
 
@@ -205,13 +205,23 @@ Reduce the size of SEED by applying SHRINK-FN."
     (unless (zerop byte)
       (propcheck--set-byte seed i 0))))
 
+(defun propcheck--halve-byte (seed i)
+  "Divide byte at I in SEED by 2 if it will produce
+a different seed."
+  (let* ((bytes (propcheck-seed-bytes seed))
+         (byte (nth i bytes)))
+    ;; Halving 1 to get 0 is pointless, because we've already tried
+    ;; zeroing this byte.
+    (when (> byte 1)
+      (propcheck--set-byte seed i (/ byte 2)))))
+
 (defun propcheck--shrink-counterexample (fun seed shrinks)
   "Call FUN up to SHRINKS times, to find a smaller version of SEED that still
 fails."
   (let* ((propcheck--shrinks-remaining shrinks))
     (->> seed
          (propcheck--shrink-by fun #'propcheck--zero-byte)
-         ;; (propcheck--shrink-by fun #'propcheck--halve-byte)
+         (propcheck--shrink-by fun #'propcheck--halve-byte)
          ;; (propcheck--shrink-by fun #'propcheck--halve-byte-with-carry)
          ;; (propcheck--shrink-by fun #'propcheck--halve-byte)
          ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte-with-carry 50))
