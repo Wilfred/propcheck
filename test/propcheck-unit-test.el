@@ -25,3 +25,28 @@
      (equal bytes '(1 2 3 4)))
     (should
      (= (propcheck-seed-i seed) 4))))
+
+(ert-deftest propcheck-generate-bool ()
+  (let* ((propcheck--shrinks-remaining 999)
+         (propcheck--seed (propcheck-seed '(0))))
+    (should
+     (null (propcheck-generate-bool))))
+  (let* ((propcheck--shrinks-remaining 999)
+         (propcheck--seed (propcheck-seed '(1))))
+    (should
+     (propcheck-generate-bool))))
+
+(ert-deftest propcheck-generate-integer ()
+  (let* ((propcheck--shrinks-remaining 999)
+         (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 0 0))))
+    (should
+     (zerop (propcheck-generate-integer))))
+  (let* ((propcheck--shrinks-remaining 999)
+         (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 1 1))))
+    (should
+     (= (propcheck-generate-integer) 257))))
+
+(ert-deftest propcheck-generate-ascii-char ()
+  (let* ((propcheck--shrinks-remaining 999)
+         (propcheck--seed (propcheck-seed '(0))))
+    (eq (propcheck-generate-ascii-char) ?\ )))
