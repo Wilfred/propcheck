@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2019  Wilfred Hughes
 ;; Version: 0.1
-;; Package-Requires: ((emacs "25.1") (dash "2.11.0"))
+;; Package-Requires: ((emacs "25.1") (dash "2.11.0") (dash-functional "1.2.0"))
 
 ;; Author: Wilfred Hughes <me@wilfred.me.uk>
 ;; Keywords: testing
@@ -34,12 +34,13 @@
 ;;; Code:
 
 (require 'dash)
+(require 'dash-functional)
 (eval-when-compile
   (require 'cl))
 
 (defvar propcheck-max-examples 100)
 ;; What values does hypothesis use?
-(defvar propcheck-max-shrinks 100)
+(defvar propcheck-max-shrinks 50)
 (defvar propcheck--shrinks-remaining nil)
 (defvar propcheck--allow-replay nil)
 
@@ -215,6 +216,13 @@ a different seed."
     (when (> byte 1)
       (propcheck--set-byte seed i (/ byte 2)))))
 
+(defun propcheck--subtract-byte (seed i amount)
+  "subtract AMOUNT at I in SEED."
+  (let* ((bytes (propcheck-seed-bytes seed))
+         (byte (nth i bytes)))
+    (when (> byte amount)
+      (propcheck--set-byte seed i (- byte amount)))))
+
 (defun propcheck--shrink-counterexample (fun seed shrinks)
   "Call FUN up to SHRINKS times, to find a smaller version of SEED that still
 fails."
@@ -222,16 +230,8 @@ fails."
     (->> seed
          (propcheck--shrink-by fun #'propcheck--zero-byte)
          (propcheck--shrink-by fun #'propcheck--halve-byte)
-         ;; (propcheck--shrink-by fun #'propcheck--halve-byte-with-carry)
-         ;; (propcheck--shrink-by fun #'propcheck--halve-byte)
-         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte-with-carry 50))
-         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 50))
-         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte-with-carry 10))
-         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 10))
-         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte-with-carry 1))
-         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 1))
-
-         )))
+         (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 10))
+         (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 1)))))
 
 (defun propcheck--find-small-counterexample (fun)
   (let ((seed

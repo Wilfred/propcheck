@@ -107,6 +107,8 @@
          nil)))))
 
 (defun propcheck--zerop-examples ()
+  "Generate several counterexamples to see how often we produce
+the optimal result."
   (let (examples)
     (dotimes (_ 20)
       (let* ((found-seed
@@ -116,4 +118,39 @@
         (push (propcheck-generate-integer) examples)))
     examples))
 
+;; Ideal result: 1 every time.
 (propcheck--zerop-examples)
+
+(defun propcheck--buggy-max-pair (x y)
+  (if (< x 101)
+      ;; Correct implementation.
+      (if (< x y) y x)
+    ;; Here's a bug!
+    11))
+
+(defun propcheck--buggy-max-pair-test ()
+  (let* ((x (propcheck-generate-integer))
+         (y (propcheck-generate-integer))
+         (result (propcheck--buggy-max-pair x y)))
+    ;; For simplicity, only check the case when x is less than y.
+    (when (< x y)
+      ;; we should have returned y.
+      (propcheck-should (eq result y)))))
+
+(defun propcheck--max-pair-examples ()
+  "Generate several counterexamples to see how often we produce
+the optimal result."
+  (let (examples)
+    (dotimes (_ 10)
+      (let* ((found-seed
+              (propcheck--find-small-counterexample #'propcheck--buggy-max-pair-test))
+             (propcheck--seed found-seed)
+             (propcheck--allow-replay t))
+        (push
+         (list (propcheck-generate-integer)
+               (propcheck-generate-integer))
+         examples)))
+    examples))
+
+;; Ideal result: (101 102) every time.
+(propcheck--max-pair-examples)
