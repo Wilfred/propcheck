@@ -223,6 +223,11 @@ fails."
 
          )))
 
+(defun propcheck--find-small-counterexample (fun)
+  (let ((seed
+         (propcheck--find-counterexample fun)))
+    (when seed
+      (propcheck--shrink-counterexample fun seed propcheck-max-shrinks))))
 
 (provide 'propcheck)
 ;;; propcheck.el ends here

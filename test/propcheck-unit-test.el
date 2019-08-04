@@ -78,6 +78,21 @@
          (funcall #'propcheck--buggy-zerop-test)
          nil)))))
 
+(ert-deftest propcheck--find-small-counterexample ()
+  (let* ((found-seed
+          (propcheck--find-small-counterexample #'propcheck--buggy-zerop-test)))
+    ;; We should have found a seed for a counterexample.
+    (should found-seed)
+    ;; That should should have i reset, so we can replay.
+    (should (eq (propcheck-seed-i found-seed) 0))
+    ;; The input found should make the test fail.
+    (let ((propcheck--allow-replay t)
+          (propcheck--seed found-seed))
+      (should
+       (catch 'counterexample
+         (funcall #'propcheck--buggy-zerop-test)
+         nil)))))
+
 (ert-deftest propcheck--shrink-counterexample ()
   (let* ((seed (propcheck-seed '(255 255 255 255 255 255 255 1)))
          (small-seed
@@ -89,5 +104,16 @@
       (should
        (catch 'counterexample
          (funcall #'propcheck--buggy-zerop-test)
-         nil)))
-    ))
+         nil)))))
+
+(defun propcheck--zerop-examples ()
+  (let (examples)
+    (dotimes (_ 10)
+      (let* ((found-seed
+              (propcheck--find-small-counterexample #'propcheck--buggy-zerop-test))
+             (propcheck--seed found-seed)
+             (propcheck--allow-replay t))
+        (push (propcheck-generate-integer) examples)))
+    examples))
+
+(propcheck--zerop-examples)
