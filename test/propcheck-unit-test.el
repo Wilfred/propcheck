@@ -71,10 +71,23 @@
     ;; That should should have i reset, so we can replay.
     (should (eq (propcheck-seed-i found-seed) 0))
     ;; The input found should make the test fail.
-    ;; We should generate this integer again.
     (let ((propcheck--allow-replay t)
           (propcheck--seed found-seed))
       (should
        (catch 'counterexample
          (funcall #'propcheck--buggy-zerop-test)
          nil)))))
+
+(ert-deftest propcheck--shrink-counterexample ()
+  (let* ((seed (propcheck-seed '(255 255 255 255 255 255 255 1)))
+         (small-seed
+          (propcheck--shrink-counterexample
+           #'propcheck--buggy-zerop-test seed 20)))
+    ;; The smaller input found should make the test fail.
+    (let ((propcheck--allow-replay t)
+          (propcheck--seed small-seed))
+      (should
+       (catch 'counterexample
+         (funcall #'propcheck--buggy-zerop-test)
+         nil)))
+    ))

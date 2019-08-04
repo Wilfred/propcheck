@@ -163,6 +163,66 @@ nil if no counterexamples were found after
     (when seed
       (propcheck--seek-start seed))))
 
+(defun propcheck--shrink-by (test-fn shrink-fn seed)
+  "Attempt to shrink SEED by calling TEST-FN with smaller values.
+Reduce the size of SEED by applying SHRINK-FN."
+  (let ((changed t))
+    ;; Keep going until we run out of shrinks, or we stop finding
+    ;; bytes that we can shrink.
+    (catch 'out-of-shrinks
+      (while changed
+        (setq changed nil)
+
+        (dotimes (i (length (propcheck-seed-bytes seed)))
+          (let* ((shrunk-seed (funcall shrink-fn seed i)))
+            (when shrunk-seed
+              (let* ((propcheck--seed shrunk-seed)
+                     (new-seed
+                      (catch 'counterexample
+                        (funcall test-fn)
+                        nil)))
+                (when new-seed
+                  (setq changed t)
+                  (setq seed
+                        (propcheck--seek-start new-seed))))
+
+              (cl-decf propcheck--shrinks-remaining)
+              (unless (> propcheck--shrinks-remaining 0)
+                (throw 'out-of-shrinks t))))))))
+  seed)
+
+(defun propcheck--set-byte (seed i value)
+  "Return a copy of SEED with byte I set to VALUE."
+  (let ((bytes (propcheck-seed-bytes seed)))
+    (propcheck-seed
+     (-replace-at i value bytes)
+     (propcheck-seed-i seed))))
+
+(defun propcheck--zero-byte (seed i)
+  "Set byte at I in SEED to zero if it isn't already."
+  (let* ((bytes (propcheck-seed-bytes seed))
+         (byte (nth i bytes)))
+    (unless (zerop byte)
+      (propcheck--set-byte seed i 0))))
+
+(defun propcheck--shrink-counterexample (fun seed shrinks)
+  "Call FUN up to SHRINKS times, to find a smaller version of SEED that still
+fails."
+  (let* ((propcheck--shrinks-remaining shrinks))
+    (->> seed
+         (propcheck--shrink-by fun #'propcheck--zero-byte)
+         ;; (propcheck--shrink-by fun #'propcheck--halve-byte)
+         ;; (propcheck--shrink-by fun #'propcheck--halve-byte-with-carry)
+         ;; (propcheck--shrink-by fun #'propcheck--halve-byte)
+         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte-with-carry 50))
+         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 50))
+         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte-with-carry 10))
+         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 10))
+         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte-with-carry 1))
+         ;; (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 1))
+
+         )))
+
 
 (provide 'propcheck)
 ;;; propcheck.el ends here
