@@ -154,3 +154,30 @@ the optimal result."
 
 ;; Ideal result: (101 102) every time.
 (propcheck--max-pair-examples)
+
+(defun propcheck--buggy-max-item (items)
+  (car items))
+
+(defun propcheck--buggy-max-item-test ()
+  (let* ((items (propcheck-generate-list #'propcheck-generate-integer))
+         (result (propcheck--buggy-max-item items)))
+    (when items
+      (propcheck-should (eq (car (-sort #'> items)) result)))))
+
+(defun propcheck--max-item-examples ()
+  "Generate several counterexamples to see how often we produce
+the optimal result."
+  (let (examples)
+    (dotimes (_ 10)
+      (let* ((found-seed
+              (propcheck--find-small-counterexample
+               #'propcheck--buggy-max-item-test))
+             (propcheck--seed found-seed)
+             (propcheck--allow-replay t))
+        (push
+         (propcheck-generate-list #'propcheck-generate-integer)
+         examples)))
+    examples))
+
+;; TODO: Expecting counterexample: (0 1)
+(propcheck--max-item-examples)
