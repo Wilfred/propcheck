@@ -18,13 +18,16 @@
      (= (propcheck-seed-i seed) 4))))
 
 (ert-deftest propcheck--seek-start ()
-  (let* ((propcheck--allow-replay t)
-         (seed (propcheck-seed '(1 2 3 4)))
-         (bytes (propcheck--draw-bytes seed 4)))
+  (let ((seed
+         (propcheck--seek-start
+          (propcheck-seed '(1 2 3 4 5) 4))))
+    ;; We should have set i back to 0.
     (should
-     (equal bytes '(1 2 3 4)))
+     (equal (propcheck-seed-i seed) 0))
+    ;; Unused bytes should be truncated.
     (should
-     (= (propcheck-seed-i seed) 4))))
+     (equal (propcheck-seed-bytes seed)
+            '(1 2 3 4)))))
 
 (ert-deftest propcheck-generate-bool ()
   (let* ((propcheck--allow-replay t)
@@ -170,8 +173,7 @@ the optimal result."
   (let (examples)
     (dotimes (_ 10)
       (let* ((found-seed
-              (propcheck--find-small-counterexample
-               #'propcheck--buggy-max-item-test))
+              (propcheck--find-small-counterexample #'propcheck--buggy-max-item-test))
              (propcheck--seed found-seed)
              (propcheck--allow-replay t))
         (push
@@ -179,5 +181,5 @@ the optimal result."
          examples)))
     examples))
 
-;; TODO: Expecting counterexample: (0 1)
+;; Ideal result: (0 1)
 (propcheck--max-item-examples)
