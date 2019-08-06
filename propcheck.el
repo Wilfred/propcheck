@@ -49,7 +49,7 @@ args first and then ARGS."
 
 (defvar propcheck-max-examples 100)
 ;; What values does hypothesis use?
-(defvar propcheck-max-shrinks 50)
+(defvar propcheck-max-shrinks 200)
 (defvar propcheck--shrinks-remaining nil)
 (defvar propcheck--allow-replay nil)
 
