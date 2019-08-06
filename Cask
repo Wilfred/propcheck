@@ -1,6 +1,6 @@
 (source melpa)
 
-(package-file "ertcheck.el")
+(package-file "propcheck.el")
 
 (development
  (depends-on "ert-runner")

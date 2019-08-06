@@ -49,6 +49,27 @@
     (should
      (= (propcheck-generate-integer) 257))))
 
+(ert-deftest propcheck-generate-list ()
+  (let* ((propcheck--allow-replay t)
+         (propcheck--seed (propcheck-seed '(64 1 0)))
+         (list (propcheck-generate-list #'propcheck-generate-bool)))
+    (should
+     (equal list '(t)))))
+
+(ert-deftest propcheck-generate-vector ()
+  (let* ((propcheck--allow-replay t)
+         (propcheck--seed (propcheck-seed '(64 1 0)))
+         (vec (propcheck-generate-vector #'propcheck-generate-bool)))
+    (should
+     (equal vec [t]))))
+
+(ert-deftest propcheck-generate-string ()
+  (let* ((propcheck--allow-replay t)
+         (propcheck--seed (propcheck-seed '(64 1 0)))
+         (str (propcheck-generate-string)))
+    (should
+     (equal str "!"))))
+
 (ert-deftest propcheck-generate-ascii-char ()
   (let* ((propcheck--allow-replay t)
          (propcheck--seed (propcheck-seed '(0))))

@@ -147,6 +147,7 @@ Note that elisp does not have a separate character type."
          (ascii-range (- max-ascii min-ascii)))
     (+ min-ascii (mod byte ascii-range))))
 
+;; TODO: circular lists, improprer lists/trees.
 (defun propcheck-generate-list (item-generator)
   "Generate a list whose items are drawn from ITEM-GENERATOR."
   (let ((result nil))
@@ -155,6 +156,23 @@ Note that elisp does not have a separate character type."
     (while (>= (car (propcheck--draw-bytes propcheck--seed 1)) 64)
       (push (funcall item-generator) result))
     result))
+
+(defun propcheck-generate-vector (item-generator)
+  "Generate a vector whose items are drawn from ITEM-GENERATOR."
+  (apply #'vector
+         (propcheck-generate-list item-generator)))
+
+(defun propcheck-generate-string ()
+  "Generate a string."
+  (let ((chars nil))
+    ;; Dumb: 75% chance of making the string bigger on each draw.
+    ;; TODO: see what hypothesis does
+    ;; TODO: multibyte support, key sequence support
+    (while (>= (car (propcheck--draw-bytes propcheck--seed 1)) 64)
+      (push
+       (propcheck-generate-ascii-char)
+       chars))
+    (concat chars)))
 
 (defun propcheck-should (valid-p)
   (unless valid-p
