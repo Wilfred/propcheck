@@ -34,9 +34,18 @@
 ;;; Code:
 
 (require 'dash)
-(require 'dash-functional)
+;; (require 'dash-functional)
 (eval-when-compile
   (require 'cl))
+
+;; Shim until I have a cask environment.
+(defun -rpartial (fn &rest args)
+  "Takes a function FN and fewer than the normal arguments to FN,
+and returns a fn that takes a variable number of additional ARGS.
+When called, the returned function calls FN with the additional
+args first and then ARGS."
+  (lambda (&rest args-before) (apply fn (append args-before args))))
+
 
 (defvar propcheck-max-examples 100)
 ;; What values does hypothesis use?

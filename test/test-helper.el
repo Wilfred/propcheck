@@ -5,10 +5,10 @@
 (require 'ert)
 (require 'f)
 
-(let ((ertcheck-dir (f-parent (f-dirname (f-this-file)))))
-  (add-to-list 'load-path ertcheck-dir))
+(let ((propcheck-dir (f-parent (f-dirname (f-this-file)))))
+  (add-to-list 'load-path propcheck-dir))
 
 (require 'undercover)
-(undercover "ertcheck.el"
+(undercover "propcheck.el"
 	    (:exclude "*-test.el")
 	    (:report-file "/tmp/undercover-report.json"))
