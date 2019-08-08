@@ -264,6 +264,34 @@ a different seed."
     (when (> byte amount)
       (propcheck--set-byte seed i (- byte amount)))))
 
+(defun propcheck--shift-right-group (seed n amount)
+  "Shift right by AMOUNT in group N in SEED.
+Returns a copy of SEED.
+Assumes N is not greater than 8."
+  (-let* ((seed-bytes (propcheck-seed-bytes seed))
+          ((group-start group-end)
+           (nth n (reverse (propcheck-seed-groups seed))))
+          (group-bytes
+           (-slice seed-bytes group-start group-end))
+          (new-bytes nil)
+          (carry 0))
+    (dolist (byte group-bytes)
+      ;; Given bytes 0xAA 0xBB, we build 3 byte number 0xAABB00,
+      ;; shift, to produce 0xPPQQRR, then QQ is our new byte and RR is
+      ;; the carry.
+      (let* ((padded-byte
+              (lsh (+ byte carry) 8)))
+        (setq padded-byte (lsh padded-byte (- amount)))
+        (setq byte (logand (lsh padded-byte -8) 255))
+        (setq carry (logand padded-byte 255))
+        (push byte new-bytes)))
+
+    (-each-indexed (nreverse new-bytes)
+      (lambda (i byte)
+        (setq seed
+              (propcheck--set-byte seed (+ group-start i) byte))))
+    seed))
+
 (defun propcheck--shrink-counterexample (fun seed shrinks)
   "Call FUN up to SHRINKS times, to find a smaller version of SEED that still
 fails."
