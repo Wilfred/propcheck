@@ -6,7 +6,10 @@
     (should
      (= (length bytes) 10))
     (should
-     (= (propcheck-seed-i seed) 10))))
+     (= (propcheck-seed-i seed) 10))
+    (should
+     (equal (propcheck-seed-groups seed)
+            '((0 10))))))
 
 (ert-deftest propcheck--draw-bytes--replay ()
   (let* ((propcheck--allow-replay t)
@@ -20,14 +23,17 @@
 (ert-deftest propcheck--seek-start ()
   (let ((seed
          (propcheck--seek-start
-          (propcheck-seed '(1 2 3 4 5) 4))))
+          (propcheck-seed '(1 2 3 4 5) 4 '((0 4))))))
     ;; We should have set i back to 0.
     (should
      (equal (propcheck-seed-i seed) 0))
     ;; Unused bytes should be truncated.
     (should
      (equal (propcheck-seed-bytes seed)
-            '(1 2 3 4)))))
+            '(1 2 3 4)))
+    ;; Discard groups, so we record them again on replay.
+    (should
+     (null (propcheck-seed-groups seed)))))
 
 (ert-deftest propcheck-generate-bool ()
   (let* ((propcheck--allow-replay t)
