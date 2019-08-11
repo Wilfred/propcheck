@@ -164,7 +164,7 @@ Note that elisp does not have a separate character type."
     (+ min-ascii (mod byte ascii-range))))
 
 ;; TODO: circular lists, improprer lists/trees.
-(defun propcheck-generate-list (item-generator)
+(defun propcheck-generate-proper-list (item-generator)
   "Generate a list whose items are drawn from ITEM-GENERATOR."
   (let ((result nil))
     ;; Make the list bigger most of the time. 50 is the threshold used
@@ -177,7 +177,7 @@ Note that elisp does not have a separate character type."
 (defun propcheck-generate-vector (item-generator)
   "Generate a vector whose items are drawn from ITEM-GENERATOR."
   (apply #'vector
-         (propcheck-generate-list item-generator)))
+         (propcheck-generate-proper-list item-generator)))
 
 (defun propcheck-generate-string ()
   "Generate a string."

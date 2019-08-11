@@ -67,10 +67,10 @@
     (should
      (= (propcheck-generate-integer) 257))))
 
-(ert-deftest propcheck-generate-list ()
+(ert-deftest propcheck-generate-proper-list ()
   (let* ((propcheck--allow-replay t)
          (propcheck--seed (propcheck-seed '(64 1 0)))
-         (list (propcheck-generate-list #'propcheck-generate-bool)))
+         (list (propcheck-generate-proper-list #'propcheck-generate-bool)))
     (should
      (equal list '(t)))))
 
@@ -222,7 +222,7 @@ the optimal result."
   (car items))
 
 (defun propcheck--buggy-max-item-test ()
-  (let* ((items (propcheck-generate-list #'propcheck-generate-integer))
+  (let* ((items (propcheck-generate-proper-list #'propcheck-generate-integer))
          (result (propcheck--buggy-max-item items)))
     (when items
       (propcheck-should (eq (car (-sort #'> items)) result)))))
@@ -237,7 +237,7 @@ the optimal result."
              (propcheck--seed found-seed)
              (propcheck--allow-replay t))
         (push
-         (propcheck-generate-list #'propcheck-generate-integer)
+         (propcheck-generate-proper-list #'propcheck-generate-integer)
          examples)))
     examples))
 
