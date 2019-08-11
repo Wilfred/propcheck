@@ -34,7 +34,7 @@
 ;;; Code:
 
 (require 'dash)
-;; (require 'dash-functional)
+(require 'dash-functional)
 (eval-when-compile
   (require 'cl))
 
