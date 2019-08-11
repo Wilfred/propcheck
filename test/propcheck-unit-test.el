@@ -59,13 +59,23 @@
 
 (ert-deftest propcheck-generate-integer ()
   (let* ((propcheck--allow-replay t)
-         (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 0 0))))
+         (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 0 0 0))))
     (should
      (zerop (propcheck-generate-integer))))
   (let* ((propcheck--allow-replay t)
-         (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 1 1))))
+         (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 0 1 1))))
     (should
      (= (propcheck-generate-integer) 257))))
+
+(ert-deftest propcheck-generate-integer--max-values ()
+  (let* ((propcheck--allow-replay t)
+         (propcheck--seed (propcheck-seed '(0 255 255 255 255 255 255 255 255))))
+    (should
+     (= (propcheck-generate-integer) most-positive-fixnum)))
+  (let* ((propcheck--allow-replay t)
+         (propcheck--seed (propcheck-seed '(255 255 255 255 255 255 255 255 255))))
+    (should
+     (= (propcheck-generate-integer) most-negative-fixnum))))
 
 (ert-deftest propcheck-generate-proper-list ()
   (let* ((propcheck--allow-replay t)
