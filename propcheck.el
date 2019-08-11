@@ -172,7 +172,9 @@ Note that elisp does not have a separate character type."
     ;; See utils.py/more in Hypothesis for a smarter approach.
     (while (> (car (propcheck--draw-bytes propcheck--seed 1)) 50)
       (push (funcall item-generator) result))
-    result))
+    ;; Reverse the list so the order in the seed reflects the order in
+    ;; the list. This can produce nicer looking shrunk values.
+    (nreverse result)))
 
 (defun propcheck-generate-vector (item-generator)
   "Generate a vector whose items are drawn from ITEM-GENERATOR."
