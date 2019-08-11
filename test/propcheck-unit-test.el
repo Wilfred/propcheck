@@ -148,6 +148,14 @@
          (funcall #'propcheck--buggy-zerop-test)
          nil)))))
 
+(ert-deftest propcheck--zero-group ()
+  (let* ((seed (propcheck-seed '(0 1 2 3) 0 '((0 2))))
+         (result (propcheck--zero-group seed 0)))
+    (should
+     (equal
+      (propcheck-seed-bytes result)
+      '(0 0 2 3)))))
+
 (ert-deftest propcheck--shift-right-group ()
   (let* ((seed (propcheck-seed '(0 4 2 1 0) 0 '((0 5))))
          (result (propcheck--shift-right-group seed 0 1)))
