@@ -249,7 +249,7 @@ Reduce the size of SEED by applying SHRINK-FN."
           (cl-incf i)))))
   seed)
 
-(defun propcheck--shrink-by (test-fn shrink-fn seed)
+(defun propcheck--shrink-byte-by (test-fn shrink-fn seed)
   "Attempt to shrink SEED by calling TEST-FN with smaller values.
 Reduce the size of SEED by applying SHRINK-FN."
   (let ((i 0)
@@ -309,7 +309,7 @@ Reduce the size of SEED by applying SHRINK-FN."
 (defun propcheck--shift-right-group (seed n amount)
   "Shift right by AMOUNT in group N in SEED.
 Returns a copy of SEED.
-Assumes N is not greater than 8."
+Assumes AMOUNT is not greater than 8."
   (-let* ((seed-bytes (propcheck-seed-bytes seed))
           ((group-start group-end)
            (nth n (reverse (propcheck-seed-groups seed))))
@@ -341,10 +341,10 @@ Assumes N is not greater than 8."
 fails."
   (let* ((propcheck--shrinks-remaining shrinks))
     (->> seed
-         (propcheck--shrink-by fun #'propcheck--zero-byte)
+         (propcheck--shrink-byte-by fun #'propcheck--zero-byte)
          (propcheck--shrink-group-by fun (-rpartial #'propcheck--shift-right-group 1))
-         (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 10))
-         (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 1)))))
+         (propcheck--shrink-byte-by fun (-rpartial #'propcheck--subtract-byte 10))
+         (propcheck--shrink-byte-by fun (-rpartial #'propcheck--subtract-byte 1)))))
 
 (defun propcheck--find-small-counterexample (fun)
   (let ((seed
