@@ -308,12 +308,16 @@ Reduce the size of SEED by applying SHRINK-FN."
 
 (defun propcheck--zero-group (seed n)
   "Set group N in SEED to zero. Returns a copy of SEED."
-  (-let [(group-start group-end)
-         (nth n (reverse (propcheck-seed-groups seed)))]
-    (dotimes (i (- group-end group-start))
-      (setq seed
-            (propcheck--set-byte seed (+ group-start i) 0)))
-    seed))
+  (-let* ((seed-bytes (propcheck-seed-bytes seed))
+          ((group-start group-end)
+           (nth n (reverse (propcheck-seed-groups seed))))
+          (group-bytes
+           (-slice seed-bytes group-start group-end)))
+    (unless (-all-p #'zerop group-bytes)
+      (dotimes (i (- group-end group-start))
+        (setq seed
+              (propcheck--set-byte seed (+ group-start i) 0)))
+      seed)))
 
 (defun propcheck--shift-right-group (seed n amount)
   "Shift right by AMOUNT in group N in SEED.

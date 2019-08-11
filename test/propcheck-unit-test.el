@@ -156,6 +156,11 @@
       (propcheck-seed-bytes result)
       '(0 0 2 3)))))
 
+(ert-deftest propcheck--zero-group--already-zero ()
+  (let ((seed (propcheck-seed '(0 0 2 3) 0 '((0 2)))))
+    (should
+     (null (propcheck--zero-group seed 0)))))
+
 (ert-deftest propcheck--shift-right-group ()
   (let* ((seed (propcheck-seed '(0 4 2 1 0) 0 '((0 5))))
          (result (propcheck--shift-right-group seed 0 1)))
