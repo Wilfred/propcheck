@@ -167,9 +167,10 @@ Note that elisp does not have a separate character type."
 (defun propcheck-generate-list (item-generator)
   "Generate a list whose items are drawn from ITEM-GENERATOR."
   (let ((result nil))
-    ;; Dumb: 75% chance of making the list bigger on each draw.
+    ;; Make the list bigger most of the time. 50 is the threshold used
+    ;; in ListStrategy.java in hypotheseis-java.
     ;; See utils.py/more in Hypothesis for a smarter approach.
-    (while (>= (car (propcheck--draw-bytes propcheck--seed 1)) 64)
+    (while (> (car (propcheck--draw-bytes propcheck--seed 1)) 50)
       (push (funcall item-generator) result))
     result))
 
