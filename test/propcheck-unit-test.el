@@ -18,7 +18,10 @@
     (should
      (equal bytes '(1 2 3 4)))
     (should
-     (= (propcheck-seed-i seed) 4))))
+     (= (propcheck-seed-i seed) 4))
+    (should
+     (equal (propcheck-seed-groups seed)
+            '((0 4))))))
 
 (ert-deftest propcheck--seek-start ()
   (let ((seed
