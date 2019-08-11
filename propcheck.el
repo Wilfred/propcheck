@@ -199,6 +199,40 @@ nil if no counterexamples were found after
     (when seed
       (propcheck--seek-start seed))))
 
+(defun propcheck--shrink-group-by (test-fn shrink-fn seed)
+  "Attempt to shrink SEED by calling TEST-FN with smaller values.
+Reduce the size of SEED by applying SHRINK-FN."
+  (let ((i 0)
+        (changed t))
+    ;; Keep going until we run out of shrinks, or we stop finding
+    ;; bytes that we can shrink.
+    (catch 'out-of-shrinks
+      (while changed
+        (setq changed nil)
+        (setq i 0)
+
+        ;; The seed might shrink during iteration, so keep checking
+        ;; the length.
+        (while (< i (length (propcheck-seed-groups seed)))
+          (let* ((shrunk-seed (funcall shrink-fn seed i)))
+            (when shrunk-seed
+              (let* ((propcheck--seed shrunk-seed)
+                     (new-seed
+                      (catch 'counterexample
+                        (funcall test-fn)
+                        nil)))
+                (when new-seed
+                  (setq changed t)
+                  (setq seed
+                        (propcheck--seek-start new-seed))))
+
+              (cl-decf propcheck--shrinks-remaining)
+              (unless (> propcheck--shrinks-remaining 0)
+                (throw 'out-of-shrinks t))))
+
+          (cl-incf i)))))
+  seed)
+
 (defun propcheck--shrink-by (test-fn shrink-fn seed)
   "Attempt to shrink SEED by calling TEST-FN with smaller values.
 Reduce the size of SEED by applying SHRINK-FN."
@@ -247,16 +281,6 @@ Reduce the size of SEED by applying SHRINK-FN."
     (unless (zerop byte)
       (propcheck--set-byte seed i 0))))
 
-(defun propcheck--halve-byte (seed i)
-  "Divide byte at I in SEED by 2 if it will produce
-a different seed."
-  (let* ((bytes (propcheck-seed-bytes seed))
-         (byte (nth i bytes)))
-    ;; Halving 1 to get 0 is pointless, because we've already tried
-    ;; zeroing this byte.
-    (when (> byte 1)
-      (propcheck--set-byte seed i (/ byte 2)))))
-
 (defun propcheck--subtract-byte (seed i amount)
   "subtract AMOUNT at I in SEED."
   (let* ((bytes (propcheck-seed-bytes seed))
@@ -298,7 +322,7 @@ fails."
   (let* ((propcheck--shrinks-remaining shrinks))
     (->> seed
          (propcheck--shrink-by fun #'propcheck--zero-byte)
-         (propcheck--shrink-by fun #'propcheck--halve-byte)
+         (propcheck--shrink-group-by fun (-rpartial #'propcheck--shift-right-group 1))
          (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 10))
          (propcheck--shrink-by fun (-rpartial #'propcheck--subtract-byte 1)))))
 
