@@ -30,10 +30,19 @@
     ;; Unused bytes should be truncated.
     (should
      (equal (propcheck-seed-bytes seed)
-            '(1 2 3 4)))
-    ;; Discard groups, so we record them again on replay.
+            '(1 2 3 4)))))
+
+(ert-deftest propcheck--set-byte ()
+  (let* ((seed (propcheck-seed '(1 2 3 4) 4 '((0 4))))
+         (result (propcheck--set-byte seed 1 0)))
     (should
-     (null (propcheck-seed-groups seed)))))
+     (equal
+      (propcheck-seed-bytes result)
+      '(1 0 3 4)))
+    (should
+     (equal (propcheck-seed-i result) 4))
+    (should
+     (equal (propcheck-seed-groups result) '((0 4))))))
 
 (ert-deftest propcheck-generate-bool ()
   (let* ((propcheck--allow-replay t)
