@@ -137,11 +137,12 @@
          nil)))))
 
 (ert-deftest propcheck--shift-right-group ()
-  (let ((seed (propcheck-seed '(0 4 2 1 0) 0 '((0 5)))))
-    (setq seed (propcheck--shift-right-group seed 0 1))
+  (let* ((seed (propcheck-seed '(0 4 2 1 0) 0 '((0 5))))
+         (result (propcheck--shift-right-group seed 0 1)))
     (should
-     (equal (propcheck-seed-bytes seed)
-            '(0 2 1 0 64)))))
+     (equal
+      (propcheck-seed-bytes result)
+      '(0 2 1 0 128)))))
 
 (defun propcheck--zerop-examples ()
   "Generate several counterexamples to see how often we produce

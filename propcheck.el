@@ -300,13 +300,15 @@ Assumes N is not greater than 8."
           (new-bytes nil)
           (carry 0))
     (dolist (byte group-bytes)
-      ;; Given bytes 0xAA 0xBB, we build 3 byte number 0xAABB00,
-      ;; shift, to produce 0xPPQQRR, then QQ is our new byte and RR is
+      ;; Given byte 0xN, we build 2 byte number 0xN0,
+      ;; shift to produce 0xPQ, then P is our new byte and Q is
       ;; the carry.
-      (let* ((padded-byte
-              (lsh (+ byte carry) 8)))
+      (let* ((padded-byte (lsh byte 8)))
+        ;; Do the shift.
         (setq padded-byte (lsh padded-byte (- amount)))
-        (setq byte (logand (lsh padded-byte -8) 255))
+        ;; Extract the new byte and new carry.
+        (setq byte (+ (logand (lsh padded-byte -8) 255)
+                      carry))
         (setq carry (logand padded-byte 255))
         (push byte new-bytes)))
 
