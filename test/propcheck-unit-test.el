@@ -251,5 +251,5 @@ the optimal result."
          examples)))
     examples))
 
-;; Ideal result: (0 1)
+;; Ideal result: (0 1) or (-1 0)
 (propcheck--max-item-examples)
