@@ -39,7 +39,10 @@
   (require 'cl))
 
 (defvar propcheck-max-examples 100)
-;; What values does hypothesis use?
+
+;; Hypothesis-java uses 2000 for maxShrinks. You need to be generating
+;; large (e.g. several lists) amounts of data before you can hit this
+;; limit.
 (defvar propcheck-max-shrinks 200)
 (defvar propcheck--shrinks-remaining nil)
 (defvar propcheck--allow-replay nil)
