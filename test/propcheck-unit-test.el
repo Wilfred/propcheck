@@ -8,7 +8,7 @@
     (should
      (= (propcheck-seed-i seed) 10))
     (should
-     (equal (propcheck-seed-groups seed)
+     (equal (propcheck-seed-intervals seed)
             '((0 10))))))
 
 (ert-deftest propcheck--draw-bytes--replay ()
@@ -20,7 +20,7 @@
     (should
      (= (propcheck-seed-i seed) 4))
     (should
-     (equal (propcheck-seed-groups seed)
+     (equal (propcheck-seed-intervals seed)
             '((0 4))))))
 
 (ert-deftest propcheck--seek-start ()
@@ -45,7 +45,7 @@
     (should
      (equal (propcheck-seed-i result) 4))
     (should
-     (equal (propcheck-seed-groups result) '((0 4))))))
+     (equal (propcheck-seed-intervals result) '((0 4))))))
 
 (ert-deftest propcheck-generate-bool ()
   (let* ((propcheck--allow-replay t)
@@ -158,22 +158,22 @@
          (funcall #'propcheck--buggy-zerop-test)
          nil)))))
 
-(ert-deftest propcheck--zero-group ()
+(ert-deftest propcheck--zero-interval ()
   (let* ((seed (propcheck-seed '(0 1 2 3) 0 '((0 2))))
-         (result (propcheck--zero-group seed 0)))
+         (result (propcheck--zero-interval seed 0)))
     (should
      (equal
       (propcheck-seed-bytes result)
       '(0 0 2 3)))))
 
-(ert-deftest propcheck--zero-group--already-zero ()
+(ert-deftest propcheck--zero-interval--already-zero ()
   (let ((seed (propcheck-seed '(0 0 2 3) 0 '((0 2)))))
     (should
-     (null (propcheck--zero-group seed 0)))))
+     (null (propcheck--zero-interval seed 0)))))
 
-(ert-deftest propcheck--shift-right-group ()
+(ert-deftest propcheck--shift-right-interval ()
   (let* ((seed (propcheck-seed '(0 4 2 1 0) 0 '((0 5))))
-         (result (propcheck--shift-right-group seed 0 1)))
+         (result (propcheck--shift-right-interval seed 0 1)))
     (should
      (equal
       (propcheck-seed-bytes result)
