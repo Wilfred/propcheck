@@ -242,6 +242,97 @@ nil if no counterexamples were found after
     (when seed
       (propcheck--seek-start seed))))
 
+(defun propcheck--list-< (x y)
+  "Return t if X is less than Y, using a lexicographic ordering.
+E.g. we consider (1 3) to be less than (2 2).
+
+Assumes X and Y are the same length."
+  (let ((result nil))
+    (catch 'done
+      (dotimes (i (length x))
+        (let ((x-item (nth i x))
+              (y-item (nth i y)))
+          ;; List is definitely less, the most significant number is
+          ;; less.
+          (when (< x-item y-item)
+            (setq result t)
+            (throw 'done nil))
+          ;; List is definitely greater, the most significant number
+          ;; is greater.
+          (when (> x-item y-item)
+            (throw 'done nil))
+          ;; Otherwise the two numbers are equal, carry on.
+          )))
+    result))
+
+(defun propcheck--swap-intervals (seed i j)
+  "Swap the bytes at interval I with inteval J in SEED,
+if interval I is less than J."
+  (-let* ((bytes (propcheck-seed-bytes seed))
+          (intervals (reverse (propcheck-seed-intervals seed)))
+          ((i-start i-end) (nth i intervals))
+          ((j-start j-end) (nth j intervals))
+          (i-bytes (-slice bytes i-start i-end))
+          (j-bytes (-slice bytes j-start j-end)))
+    (when (and
+           (= (length i-bytes) (length j-bytes))
+           (propcheck--list-< j-bytes i-bytes))
+      (dotimes (index (- i-end i-start))
+        ;; Copy a byte from J to I.
+        (setq seed
+              (propcheck--set-byte
+               seed
+               (+ i-start index)
+               (nth (+ j-start index) bytes)))
+        ;; Write the old byte value of I into J.
+        (setq seed
+              (propcheck--set-byte
+               seed
+               (+ j-start index)
+               (nth index i-bytes))))
+      seed)))
+
+(defun propcheck--shrink-swapping-intervals (test-fn seed)
+  "Attempt to shrink SEED by reordering intervals and calling TEST-FN."
+  (let ((i 0)
+        (j 0)
+        (changed t))
+    ;; Keep going until we run out of shrinks, or we stop finding
+    ;; intervals that we can swap.
+    (catch 'out-of-shrinks
+      (while changed
+        (setq changed nil)
+        (setq i 0)
+
+        ;; The seed might shrink during iteration, so keep checking
+        ;; the length.
+        (while (< i (1- (length (propcheck-seed-intervals seed))))
+          (setq j (1+ i))
+          (while (< j (length (propcheck-seed-intervals seed)))
+            (let ((shrunk-seed (propcheck--swap-intervals seed i j)))
+              (when shrunk-seed
+                (let* ((propcheck--seed
+                        ;; Discard the interval data before calling
+                        ;; TEST-FN, so we can see if it uses different
+                        ;; intervals in this run.
+                        (propcheck--no-intervals shrunk-seed))
+                       (new-seed
+                        (catch 'counterexample
+                          (funcall test-fn)
+                          nil)))
+                  (when new-seed
+                    (setq changed t)
+                    (setq seed
+                          (propcheck--seek-start new-seed))))
+
+                (cl-decf propcheck--shrinks-remaining)
+                (unless (> propcheck--shrinks-remaining 0)
+                  (throw 'out-of-shrinks t))))
+            (cl-incf j))
+
+          (cl-incf i)))))
+  seed)
+
 (defun propcheck--shrink-interval-by (test-fn shrink-fn seed)
   "Attempt to shrink SEED by calling TEST-FN with smaller values.
 Reduce the size of SEED by applying SHRINK-FN."
@@ -390,6 +481,7 @@ fails."
     (->> seed
          (propcheck--shrink-interval-by fun #'propcheck--zero-interval)
          (propcheck--shrink-byte-by fun #'propcheck--zero-byte)
+         (propcheck--shrink-swapping-intervals fun)
          (propcheck--shrink-interval-by fun (-rpartial #'propcheck--shift-right-interval 1))
          (propcheck--shrink-byte-by fun (-rpartial #'propcheck--subtract-byte 10))
          (propcheck--shrink-byte-by fun (-rpartial #'propcheck--subtract-byte 1)))))

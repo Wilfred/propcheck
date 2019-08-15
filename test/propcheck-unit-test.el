@@ -179,6 +179,26 @@
       (propcheck-seed-bytes result)
       '(0 2 1 0 128)))))
 
+(ert-deftest propcheck--list-< ()
+  (should
+   (propcheck--list-< '(1 2) '(3 4)))
+  (should
+   (propcheck--list-< '(1 2) '(1 4)))
+  (should
+   (not (propcheck--list-< '(2 2) '(2 2))))
+  (should
+   (not (propcheck--list-< '(2 4) '(2 3)))))
+
+(ert-deftest propcheck--swap-intervals ()
+  (let* ((seed (propcheck-seed '(5 4 3 2 1) 0 '((3 5) (2 3) (0 2))))
+         (result (propcheck--swap-intervals seed 0 2)))
+    (should
+     (equal (propcheck-seed-bytes result) '(2 1 3 5 4))))
+  ;; Don't try to swap intervals of different lengths.
+  (let ((seed (propcheck-seed '(1 2 3 4 5) 0 '((1 5) (0 4)))))
+    (should
+     (null (propcheck--swap-intervals seed 0 1)))))
+
 (defun propcheck--zerop-examples ()
   "Generate several counterexamples to see how often we produce
 the optimal result."
