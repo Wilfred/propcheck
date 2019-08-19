@@ -126,7 +126,7 @@
     (let ((propcheck--allow-replay t)
           (propcheck--seed found-seed))
       (should
-       (catch 'counterexample
+       (catch 'propcheck--counterexample
          (funcall #'propcheck--buggy-zerop-test)
          nil)))))
 
@@ -141,7 +141,7 @@
     (let ((propcheck--allow-replay t)
           (propcheck--seed found-seed))
       (should
-       (catch 'counterexample
+       (catch 'propcheck--counterexample
          (funcall #'propcheck--buggy-zerop-test)
          nil)))))
 
@@ -154,7 +154,7 @@
     (let ((propcheck--allow-replay t)
           (propcheck--seed small-seed))
       (should
-       (catch 'counterexample
+       (catch 'propcheck--counterexample
          (funcall #'propcheck--buggy-zerop-test)
          nil)))))
 

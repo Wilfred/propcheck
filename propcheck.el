@@ -226,7 +226,7 @@ Note that elisp does not have a separate character type."
 (defun propcheck-should (valid-p)
   (propcheck--debug "valid" valid-p)
   (unless valid-p
-    (throw 'counterexample
+    (throw 'propcheck--counterexample
            propcheck--seed)))
 
 (defun propcheck--funcall-with-seed (fun seed)
@@ -236,7 +236,7 @@ If a counterexample is found, return the final seed."
          ;; Discard the interval data before calling FUN, so we can
          ;; see if it uses different intervals in this run.
          (propcheck--no-intervals seed)))
-    (catch 'counterexample
+    (catch 'propcheck--counterexample
       (catch 'propcheck--overrun
         (funcall fun))
       nil)))
