@@ -158,6 +158,15 @@
          (funcall #'propcheck--buggy-zerop-test)
          nil)))))
 
+(ert-deftest propcheck--shrink-counterexample--overrun ()
+  "Ensure we handle overruns gracefully."
+  ;; This seed is too small: it's only one byte, but
+  ;; `propcheck--buggy-zerop-test' requires more bytes to generate an
+  ;; integer, so we overrun.
+  (let ((seed (propcheck-seed '(0) 1 '((0 1)))))
+    ;; No assertion, just ensure we don't error.
+    (propcheck--shrink-counterexample #'propcheck--buggy-zerop-test seed 20)))
+
 (ert-deftest propcheck--zero-interval ()
   (let* ((seed (propcheck-seed '(0 1 2 3) 0 '((0 2))))
          (result (propcheck--zero-interval seed 0)))
