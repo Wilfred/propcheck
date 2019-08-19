@@ -203,7 +203,7 @@ Note that elisp does not have a separate character type."
   "Generate a list whose items are drawn from ITEM-GENERATOR."
   (let ((result nil))
     ;; Make the list bigger most of the time. 50 is the threshold used
-    ;; in ListStrategy.java in hypotheseis-java.
+    ;; in ListStrategy.java in hypothesis-java.
     ;; See utils.py/more in Hypothesis for a smarter approach.
     (while (> (car (propcheck--draw-bytes propcheck--seed 1)) 50)
       (push (funcall item-generator) result))
