@@ -267,7 +267,9 @@ Assumes X and Y are the same length."
 
 (defun propcheck--swap-intervals (seed i j)
   "Swap the bytes at interval I with inteval J in SEED,
-if interval I is less than J."
+if interval J is less than I.
+
+Assumes I < J."
   (-let* ((bytes (propcheck-seed-bytes seed))
           (intervals (reverse (propcheck-seed-intervals seed)))
           ((i-start i-end) (nth i intervals))
