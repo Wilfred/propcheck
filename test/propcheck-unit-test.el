@@ -12,7 +12,7 @@
             '((0 10))))))
 
 (ert-deftest propcheck--draw-bytes--replay ()
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (seed (propcheck-seed '(1 2 3 4)))
          (bytes (propcheck--draw-bytes seed 4)))
     (should
@@ -48,58 +48,58 @@
      (equal (propcheck-seed-intervals result) '((0 4))))))
 
 (ert-deftest propcheck-generate-bool ()
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(0))))
     (should
      (null (propcheck-generate-bool))))
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(1))))
     (should
      (propcheck-generate-bool))))
 
 (ert-deftest propcheck-generate-integer ()
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 0 0 0))))
     (should
      (zerop (propcheck-generate-integer))))
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 0 1 1))))
     (should
      (= (propcheck-generate-integer) 257))))
 
 (ert-deftest propcheck-generate-integer--max-values ()
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(0 255 255 255 255 255 255 255 255))))
     (should
      (= (propcheck-generate-integer) most-positive-fixnum)))
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(255 255 255 255 255 255 255 255 255))))
     (should
      (= (propcheck-generate-integer) most-negative-fixnum))))
 
 (ert-deftest propcheck-generate-proper-list ()
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(64 1 0)))
          (list (propcheck-generate-proper-list #'propcheck-generate-bool)))
     (should
      (equal list '(t)))))
 
 (ert-deftest propcheck-generate-vector ()
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(64 1 0)))
          (vec (propcheck-generate-vector #'propcheck-generate-bool)))
     (should
      (equal vec [t]))))
 
 (ert-deftest propcheck-generate-string ()
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(64 1 0)))
          (str (propcheck-generate-string)))
     (should
      (equal str "!"))))
 
 (ert-deftest propcheck-generate-ascii-char ()
-  (let* ((propcheck--allow-replay t)
+  (let* ((propcheck--replay t)
          (propcheck--seed (propcheck-seed '(0))))
     (eq (propcheck-generate-ascii-char) ?\ )))
 
@@ -123,7 +123,7 @@
     ;; That should should have i reset, so we can replay.
     (should (eq (propcheck-seed-i found-seed) 0))
     ;; The input found should make the test fail.
-    (let ((propcheck--allow-replay t)
+    (let ((propcheck--replay t)
           (propcheck--seed found-seed))
       (should
        (catch 'propcheck--counterexample
@@ -138,7 +138,7 @@
     ;; That should should have i reset, so we can replay.
     (should (eq (propcheck-seed-i found-seed) 0))
     ;; The input found should make the test fail.
-    (let ((propcheck--allow-replay t)
+    (let ((propcheck--replay t)
           (propcheck--seed found-seed))
       (should
        (catch 'propcheck--counterexample
@@ -151,7 +151,7 @@
           (propcheck--shrink-counterexample
            #'propcheck--buggy-zerop-test seed 20)))
     ;; The smaller input found should make the test fail.
-    (let ((propcheck--allow-replay t)
+    (let ((propcheck--replay t)
           (propcheck--seed small-seed))
       (should
        (catch 'propcheck--counterexample
@@ -216,8 +216,8 @@ the optimal result."
       (let* ((found-seed
               (propcheck--find-small-counterexample #'propcheck--buggy-zerop-test))
              (propcheck--seed found-seed)
-             (propcheck--allow-replay t))
         (push (propcheck-generate-integer) examples)))
+             (propcheck--replay t))
     examples))
 
 ;; Ideal result: 1 every time.
@@ -247,7 +247,7 @@ the optimal result."
       (let* ((found-seed
               (propcheck--find-small-counterexample #'propcheck--buggy-max-pair-test))
              (propcheck--seed found-seed)
-             (propcheck--allow-replay t))
+             (propcheck--replay t))
         (push
          (list (propcheck-generate-integer)
                (propcheck-generate-integer))
@@ -274,7 +274,7 @@ the optimal result."
       (let* ((found-seed
               (propcheck--find-small-counterexample #'propcheck--buggy-max-item-test))
              (propcheck--seed found-seed)
-             (propcheck--allow-replay t))
+             (propcheck--replay t))
         (push
          (propcheck-generate-proper-list #'propcheck-generate-integer)
          examples)))
