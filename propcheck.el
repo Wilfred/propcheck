@@ -260,7 +260,11 @@ If a counterexample is found, return the final seed."
          (propcheck--no-intervals seed)))
     (catch 'propcheck--counterexample
       (catch 'propcheck--overrun
-        (funcall fun))
+        (condition-case nil
+            (funcall fun)
+          (error
+           ;; Consider an error to be another counterexample.
+           (throw 'propcheck--counterexample propcheck--seed))))
       nil)))
 
 (defun propcheck--find-counterexample (fun)

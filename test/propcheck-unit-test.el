@@ -130,6 +130,32 @@
          (funcall #'propcheck--buggy-zerop-test)
          nil)))))
 
+(defun propcheck--buggy-1+ (x)
+  (when (> x 23)
+    (error "yikes!"))
+  (1+ x))
+
+(defun propcheck--buggy-1+-test ()
+  (let* ((i (propcheck-generate-integer "i")))
+    (propcheck-should
+     (= (propcheck--buggy-1+ i) (1+ i)))))
+
+(ert-deftest propcheck--find-counterexample--errors ()
+  "Ensure we handle sample functions that throw errors."
+  (let* ((found-seed
+          (propcheck--find-counterexample #'propcheck--buggy-1+-test)))
+    ;; We should have found a seed for a counterexample.
+    (should found-seed)
+    ;; The input found should make the test error.
+    (let ((propcheck--replay t)
+          (propcheck--seed found-seed))
+      (condition-case nil
+          (progn
+            (funcall #'propcheck--buggy-1+-test)
+            ;; We should have errored and not reached this.
+            (should nil))
+        (error nil)))))
+
 (ert-deftest propcheck--find-small-counterexample ()
   (let* ((found-seed
           (propcheck--find-small-counterexample #'propcheck--buggy-zerop-test)))
