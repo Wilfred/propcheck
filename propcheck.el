@@ -113,10 +113,10 @@ counterexample?"
 
 (defun propcheck--debug (&rest _)
   "Debugging helper function"
-  ;; Deliberately don't do anything with arguments. Instead, use M-x
-  ;; trace-function to see values passed to this function when also
-  ;; tracing shrinking logic.
-  )
+  ;; Deliberately don't do anything with the arguments. Instead, use
+  ;; M-x trace-function to see values passed to this function when
+  ;; also tracing shrinking logic.
+  nil)
 
 (defun propcheck--seek-start (seed)
   "Return a copy of SEED with i set to the beginning."
