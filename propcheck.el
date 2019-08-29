@@ -490,16 +490,19 @@ fails."
       (propcheck--shrink-counterexample fun seed propcheck-max-shrinks))))
 
 (defmacro propcheck-deftest (name args &rest body)
-  (declare (doc-string 3) (indent 2))
-  `(progn
-     ;; TODO: don't define a global function.
-     (defun ,name ,args ,@body)
-     (ert-deftest ,name ,args
-       (dotimes (_ 10)
-         (let ((found-seed
-                (propcheck--find-small-counterexample (function ,name))))
-           (when found-seed
-             (should (and nil "Found counterexample!"))))))))
+  (declare (doc-string 3) (indent 2)
+           (debug (&define :name test
+                           name sexp [&optional stringp]
+			   def-body)))
+  (let ((fun-sym (gensym "propcheck-fun")))
+    `(ert-deftest ,name ,args
+       (let* ((,fun-sym (lambda ,args ,@body))
+              (found-seed
+               (propcheck--find-small-counterexample ,fun-sym)))
+         (when found-seed
+           (let ((propcheck--replay '(())))
+             (propcheck--funcall-with-seed ,fun-sym found-seed)
+             (ert-fail (list "Found counterexample" (car propcheck--replay)))))))))
 
 (provide 'propcheck)
 ;;; propcheck.el ends here
