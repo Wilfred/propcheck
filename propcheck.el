@@ -158,17 +158,32 @@ counterexample?"
 ;; TODO: `propcheck--seed' should be public, so users can define their
 ;; own generators.
 
-(defun propcheck-generate-bool (_name)
-  (let ((rand-byte (car (propcheck--draw-bytes propcheck--seed 1))))
-    (not (zerop (logand rand-byte 1)))))
+(defmacro propcheck-remember (name &rest body)
+  (declare (indent 1) (debug t))
+  (let ((name-sym (gensym "propcheck-name"))
+        (val-sym (gensym "propcheck-val")))
+    `(let ((,name-sym ,name)
+           (,val-sym
+            (progn
+              ,@body)))
+       (when (and ,name-sym propcheck--replay)
+         (push (cons ,name-sym ,val-sym)
+               propcheck--replay))
+       ,val-sym)))
 
-(defun propcheck-generate-integer (_name)
-  (let ((sign (car (propcheck--draw-bytes propcheck--seed 1))))
-    ;; 50% chance of negative numbers.
-    (if (<= sign 128)
-        (propcheck--generate-positive-integer)
-      (1-
-       (- (propcheck--generate-positive-integer))))))
+(defun propcheck-generate-bool (name)
+  (propcheck-remember name
+    (let ((rand-byte (car (propcheck--draw-bytes propcheck--seed 1))))
+      (not (zerop (logand rand-byte 1))))))
+
+(defun propcheck-generate-integer (name)
+  (propcheck-remember name
+    (let ((sign (car (propcheck--draw-bytes propcheck--seed 1))))
+      ;; 50% chance of negative numbers.
+      (if (<= sign 128)
+          (propcheck--generate-positive-integer)
+        (1-
+         (- (propcheck--generate-positive-integer)))))))
 
 (defun propcheck--generate-positive-integer ()
   (let* ((bits-in-integers (round (log most-positive-fixnum 2)))
@@ -187,44 +202,48 @@ counterexample?"
                it)))
     result))
 
-(defun propcheck-generate-ascii-char (_name)
+(defun propcheck-generate-ascii-char (name)
   "Generate a number that's an ASCII char.
 Note that elisp does not have a separate character type."
-  ;; between 32 and 126
-  (let* ((rand-bytes (propcheck--draw-bytes propcheck--seed 1))
-         (byte (car rand-bytes))
-         (min-ascii 32)
-         (max-ascii 126)
-         (ascii-range (- max-ascii min-ascii)))
-    (+ min-ascii (mod byte ascii-range))))
+  (propcheck-remember name
+    ;; between 32 and 126
+    (let* ((rand-bytes (propcheck--draw-bytes propcheck--seed 1))
+           (byte (car rand-bytes))
+           (min-ascii 32)
+           (max-ascii 126)
+           (ascii-range (- max-ascii min-ascii)))
+      (+ min-ascii (mod byte ascii-range)))))
 
 ;; TODO: circular lists, improprer lists/trees.
-(defun propcheck-generate-proper-list (_name item-generator)
+(defun propcheck-generate-proper-list (name item-generator)
   "Generate a list whose items are drawn from ITEM-GENERATOR."
-  (let ((result nil))
-    ;; Make the list bigger most of the time. 50 is the threshold used
-    ;; in ListStrategy.java in hypothesis-java.
-    ;; See utils.py/more in Hypothesis for a smarter approach.
-    (while (> (car (propcheck--draw-bytes propcheck--seed 1)) 50)
-      (push (funcall item-generator nil) result))
-    result))
+  (propcheck-remember name
+    (let ((result nil))
+      ;; Make the list bigger most of the time. 50 is the threshold used
+      ;; in ListStrategy.java in hypothesis-java.
+      ;; See utils.py/more in Hypothesis for a smarter approach.
+      (while (> (car (propcheck--draw-bytes propcheck--seed 1)) 50)
+        (push (funcall item-generator nil) result))
+      result)))
 
-(defun propcheck-generate-vector (_name item-generator)
+(defun propcheck-generate-vector (name item-generator)
   "Generate a vector whose items are drawn from ITEM-GENERATOR."
-  (apply #'vector
-         (propcheck-generate-proper-list nil item-generator)))
+  (propcheck-remember name
+    (apply #'vector
+           (propcheck-generate-proper-list nil item-generator))))
 
-(defun propcheck-generate-string (_name)
+(defun propcheck-generate-string (name)
   "Generate a string."
-  (let ((chars nil))
-    ;; Dumb: 75% chance of making the string bigger on each draw.
-    ;; TODO: see what hypothesis does
-    ;; TODO: multibyte support, key sequence support
-    (while (>= (car (propcheck--draw-bytes propcheck--seed 1)) 64)
-      (push
-       (propcheck-generate-ascii-char nil)
-       chars))
-    (concat chars)))
+  (propcheck-remember name
+    (let ((chars nil))
+      ;; Dumb: 75% chance of making the string bigger on each draw.
+      ;; TODO: see what hypothesis does
+      ;; TODO: multibyte support, key sequence support
+      (while (>= (car (propcheck--draw-bytes propcheck--seed 1)) 64)
+        (push
+         (propcheck-generate-ascii-char nil)
+         chars))
+      (concat chars))))
 
 (defun propcheck-should (valid-p)
   (propcheck--debug "valid" valid-p)
