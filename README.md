@@ -5,6 +5,8 @@ propcheck brings property based testing to elisp.
 It's similar to the excellent [Hypothesis](https://hypothesis.works/)
 library for Python.
 
+Status: beta. It works, but expect rough edges.
+
 ## Usage
 
 Tests are defined with `propcheck-deftest`, which defines an ERT test
