@@ -158,11 +158,11 @@ counterexample?"
 ;; TODO: `propcheck--seed' should be public, so users can define their
 ;; own generators.
 
-(defun propcheck-generate-bool ()
+(defun propcheck-generate-bool (_name)
   (let ((rand-byte (car (propcheck--draw-bytes propcheck--seed 1))))
     (not (zerop (logand rand-byte 1)))))
 
-(defun propcheck-generate-integer ()
+(defun propcheck-generate-integer (_name)
   (let ((sign (car (propcheck--draw-bytes propcheck--seed 1))))
     ;; 50% chance of negative numbers.
     (if (<= sign 128)
@@ -187,7 +187,7 @@ counterexample?"
                it)))
     result))
 
-(defun propcheck-generate-ascii-char ()
+(defun propcheck-generate-ascii-char (_name)
   "Generate a number that's an ASCII char.
 Note that elisp does not have a separate character type."
   ;; between 32 and 126
@@ -199,22 +199,22 @@ Note that elisp does not have a separate character type."
     (+ min-ascii (mod byte ascii-range))))
 
 ;; TODO: circular lists, improprer lists/trees.
-(defun propcheck-generate-proper-list (item-generator)
+(defun propcheck-generate-proper-list (_name item-generator)
   "Generate a list whose items are drawn from ITEM-GENERATOR."
   (let ((result nil))
     ;; Make the list bigger most of the time. 50 is the threshold used
     ;; in ListStrategy.java in hypothesis-java.
     ;; See utils.py/more in Hypothesis for a smarter approach.
     (while (> (car (propcheck--draw-bytes propcheck--seed 1)) 50)
-      (push (funcall item-generator) result))
+      (push (funcall item-generator nil) result))
     result))
 
-(defun propcheck-generate-vector (item-generator)
+(defun propcheck-generate-vector (_name item-generator)
   "Generate a vector whose items are drawn from ITEM-GENERATOR."
   (apply #'vector
-         (propcheck-generate-proper-list item-generator)))
+         (propcheck-generate-proper-list nil item-generator)))
 
-(defun propcheck-generate-string ()
+(defun propcheck-generate-string (_name)
   "Generate a string."
   (let ((chars nil))
     ;; Dumb: 75% chance of making the string bigger on each draw.
@@ -222,7 +222,7 @@ Note that elisp does not have a separate character type."
     ;; TODO: multibyte support, key sequence support
     (while (>= (car (propcheck--draw-bytes propcheck--seed 1)) 64)
       (push
-       (propcheck-generate-ascii-char)
+       (propcheck-generate-ascii-char nil)
        chars))
     (concat chars)))
 
