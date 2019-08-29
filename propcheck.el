@@ -47,7 +47,7 @@
 (defvar propcheck--shrinks-remaining nil)
 (defvar propcheck--replay nil)
 
-(defvar propcheck--seed
+(defvar propcheck-seed
   nil
   "The current seed being used to generate values.
 This is a global variable so users aren't force to pass it to
@@ -149,14 +149,11 @@ counterexample?"
 
 ;;; Generators
 
-;; These functions generate a random value, updating `propcheck--seed'.
+;; These functions generate a random value, updating `propcheck-seed'.
 ;; They have two important invariants:
 ;;
 ;; * Smaller seeds should produce smaller inputs
 ;; * Smaller seeds should not consume more bytes than larger seeds
-
-;; TODO: `propcheck--seed' should be public, so users can define their
-;; own generators.
 
 (defmacro propcheck-remember (name &rest body)
   (declare (indent 1) (debug t))
@@ -173,12 +170,12 @@ counterexample?"
 
 (defun propcheck-generate-bool (name)
   (propcheck-remember name
-    (let ((rand-byte (car (propcheck--draw-bytes propcheck--seed 1))))
+    (let ((rand-byte (car (propcheck--draw-bytes propcheck-seed 1))))
       (not (zerop (logand rand-byte 1))))))
 
 (defun propcheck-generate-integer (name)
   (propcheck-remember name
-    (let ((sign (car (propcheck--draw-bytes propcheck--seed 1))))
+    (let ((sign (car (propcheck--draw-bytes propcheck-seed 1))))
       ;; 50% chance of negative numbers.
       (if (<= sign 128)
           (propcheck--generate-positive-integer)
@@ -190,7 +187,7 @@ counterexample?"
          (bytes-needed (ceiling (/ bits-in-integers 8.0)))
          (high-bits-needed (- bits-in-integers
                               (* (1- bytes-needed) 8)))
-         (rand-bytes (propcheck--draw-bytes propcheck--seed bytes-needed))
+         (rand-bytes (propcheck--draw-bytes propcheck-seed bytes-needed))
          (result 0))
     (--each-indexed rand-bytes
       ;; Avoid overflow for the bits in the highest byte.
@@ -207,7 +204,7 @@ counterexample?"
 Note that elisp does not have a separate character type."
   (propcheck-remember name
     ;; between 32 and 126
-    (let* ((rand-bytes (propcheck--draw-bytes propcheck--seed 1))
+    (let* ((rand-bytes (propcheck--draw-bytes propcheck-seed 1))
            (byte (car rand-bytes))
            (min-ascii 32)
            (max-ascii 126)
@@ -222,7 +219,7 @@ Note that elisp does not have a separate character type."
       ;; Make the list bigger most of the time. 50 is the threshold used
       ;; in ListStrategy.java in hypothesis-java.
       ;; See utils.py/more in Hypothesis for a smarter approach.
-      (while (> (car (propcheck--draw-bytes propcheck--seed 1)) 50)
+      (while (> (car (propcheck--draw-bytes propcheck-seed 1)) 50)
         (push (funcall item-generator nil) result))
       result)))
 
@@ -239,7 +236,7 @@ Note that elisp does not have a separate character type."
       ;; Dumb: 75% chance of making the string bigger on each draw.
       ;; TODO: see what hypothesis does
       ;; TODO: multibyte support, key sequence support
-      (while (>= (car (propcheck--draw-bytes propcheck--seed 1)) 64)
+      (while (>= (car (propcheck--draw-bytes propcheck-seed 1)) 64)
         (push
          (propcheck-generate-ascii-char nil)
          chars))
@@ -249,12 +246,12 @@ Note that elisp does not have a separate character type."
   (propcheck--debug "valid" valid-p)
   (unless valid-p
     (throw 'propcheck--counterexample
-           propcheck--seed)))
+           propcheck-seed)))
 
 (defun propcheck--funcall-with-seed (fun seed)
   "Call FUN with SEED used to generate inputs.
 If a counterexample is found, return the final seed."
-  (let ((propcheck--seed
+  (let ((propcheck-seed
          ;; Discard the interval data before calling FUN, so we can
          ;; see if it uses different intervals in this run.
          (propcheck--no-intervals seed)))
@@ -264,7 +261,7 @@ If a counterexample is found, return the final seed."
             (funcall fun)
           (error
            ;; Consider an error to be another counterexample.
-           (throw 'propcheck--counterexample propcheck--seed))))
+           (throw 'propcheck--counterexample propcheck-seed))))
       nil)))
 
 (defun propcheck--find-counterexample (fun)

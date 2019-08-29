@@ -49,58 +49,58 @@
 
 (ert-deftest propcheck-generate-bool ()
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(0))))
+         (propcheck-seed (propcheck-seed '(0))))
     (should
      (null (propcheck-generate-bool nil))))
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(1))))
+         (propcheck-seed (propcheck-seed '(1))))
     (should
      (propcheck-generate-bool nil))))
 
 (ert-deftest propcheck-generate-integer ()
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 0 0 0))))
+         (propcheck-seed (propcheck-seed '(0 0 0 0 0 0 0 0 0))))
     (should
      (zerop (propcheck-generate-integer nil))))
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(0 0 0 0 0 0 0 1 1))))
+         (propcheck-seed (propcheck-seed '(0 0 0 0 0 0 0 1 1))))
     (should
      (= (propcheck-generate-integer nil) 257))))
 
 (ert-deftest propcheck-generate-integer--max-values ()
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(0 255 255 255 255 255 255 255 255))))
+         (propcheck-seed (propcheck-seed '(0 255 255 255 255 255 255 255 255))))
     (should
      (= (propcheck-generate-integer nil) most-positive-fixnum)))
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(255 255 255 255 255 255 255 255 255))))
+         (propcheck-seed (propcheck-seed '(255 255 255 255 255 255 255 255 255))))
     (should
      (= (propcheck-generate-integer nil) most-negative-fixnum))))
 
 (ert-deftest propcheck-generate-proper-list ()
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(64 1 0)))
+         (propcheck-seed (propcheck-seed '(64 1 0)))
          (list (propcheck-generate-proper-list nil #'propcheck-generate-bool)))
     (should
      (equal list '(t)))))
 
 (ert-deftest propcheck-generate-vector ()
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(64 1 0)))
+         (propcheck-seed (propcheck-seed '(64 1 0)))
          (vec (propcheck-generate-vector nil #'propcheck-generate-bool)))
     (should
      (equal vec [t]))))
 
 (ert-deftest propcheck-generate-string ()
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(64 1 0)))
+         (propcheck-seed (propcheck-seed '(64 1 0)))
          (str (propcheck-generate-string nil)))
     (should
      (equal str "!"))))
 
 (ert-deftest propcheck-generate-ascii-char ()
   (let* ((propcheck--replay t)
-         (propcheck--seed (propcheck-seed '(0))))
+         (propcheck-seed (propcheck-seed '(0))))
     (eq (propcheck-generate-ascii-char nil) ?\ )))
 
 (defun propcheck--buggy-zerop (num)
@@ -124,7 +124,7 @@
     (should (eq (propcheck-seed-i found-seed) 0))
     ;; The input found should make the test fail.
     (let ((propcheck--replay t)
-          (propcheck--seed found-seed))
+          (propcheck-seed found-seed))
       (should
        (catch 'propcheck--counterexample
          (funcall #'propcheck--buggy-zerop-test)
@@ -148,7 +148,7 @@
     (should found-seed)
     ;; The input found should make the test error.
     (let ((propcheck--replay t)
-          (propcheck--seed found-seed))
+          (propcheck-seed found-seed))
       (condition-case nil
           (progn
             (funcall #'propcheck--buggy-1+-test)
@@ -165,7 +165,7 @@
     (should (eq (propcheck-seed-i found-seed) 0))
     ;; The input found should make the test fail.
     (let ((propcheck--replay t)
-          (propcheck--seed found-seed))
+          (propcheck-seed found-seed))
       (should
        (catch 'propcheck--counterexample
          (funcall #'propcheck--buggy-zerop-test)
@@ -178,7 +178,7 @@
            #'propcheck--buggy-zerop-test seed 20)))
     ;; The smaller input found should make the test fail.
     (let ((propcheck--replay t)
-          (propcheck--seed small-seed))
+          (propcheck-seed small-seed))
       (should
        (catch 'propcheck--counterexample
          (funcall #'propcheck--buggy-zerop-test)
@@ -241,7 +241,7 @@
     (dotimes (_ 10)
       (let* ((found-seed
               (propcheck--find-small-counterexample #'propcheck--buggy-zerop-test))
-             (propcheck--seed found-seed)
+             (propcheck-seed found-seed)
              (propcheck--replay t)
              (num (propcheck-generate-integer nil)))
         (when (= num 1)
@@ -272,7 +272,7 @@ the optimal result."
     (dotimes (_ 10)
       (let* ((found-seed
               (propcheck--find-small-counterexample #'propcheck--buggy-max-pair-test))
-             (propcheck--seed found-seed)
+             (propcheck-seed found-seed)
              (propcheck--replay t))
         (push
          (list (propcheck-generate-integer "x")
@@ -299,7 +299,7 @@ the optimal result."
     (dotimes (_ 10)
       (let* ((found-seed
               (propcheck--find-small-counterexample #'propcheck--buggy-max-item-test))
-             (propcheck--seed found-seed)
+             (propcheck-seed found-seed)
              (propcheck--replay t))
         (push
          (propcheck-generate-proper-list nil #'propcheck-generate-integer)
