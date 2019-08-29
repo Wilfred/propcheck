@@ -208,20 +208,20 @@
     (should
      (null (propcheck--swap-intervals seed 0 1)))))
 
-(defun propcheck--zerop-examples ()
-  "Generate several counterexamples to see how often we produce
-the optimal result."
-  (let (examples)
-    (dotimes (_ 20)
+(ert-deftest propcheck-shrinking-buggy-zerop ()
+  "Ensure that we find the minimal counterexample for
+`propcheck--buggy-zerop'."
+  (let ((optimal-count 0))
+    (dotimes (_ 10)
       (let* ((found-seed
               (propcheck--find-small-counterexample #'propcheck--buggy-zerop-test))
              (propcheck--seed found-seed)
-             (propcheck--replay t))
-        (push (propcheck-generate-integer "i") examples)))
-    examples))
-
-;; Ideal result: 1 every time.
-;; (propcheck--zerop-examples)
+             (propcheck--replay t)
+             (num (propcheck-generate-integer nil)))
+        (when (= num 1)
+          (cl-incf optimal-count))))
+    ;; We should get the optimal result at least 50% of the time.
+    (should (>= optimal-count))))
 
 (defun propcheck--buggy-max-pair (x y)
   (if (< x 101)
