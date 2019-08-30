@@ -156,6 +156,8 @@ counterexample?"
 ;; * Smaller seeds should not consume more bytes than larger seeds
 
 (defmacro propcheck-remember (name &rest body)
+  "Evaluate BODY as `progn', but save the returned value if we're
+replaying."
   (declare (indent 1) (debug t))
   (let ((name-sym (gensym "propcheck-name"))
         (val-sym (gensym "propcheck-val")))
@@ -169,6 +171,7 @@ counterexample?"
        ,val-sym)))
 
 (defun propcheck-generate-bool (name)
+  "Generate either nil or t."
   (propcheck-remember name
     (let ((rand-byte (car (propcheck--draw-bytes propcheck-seed 1))))
       (not (zerop (logand rand-byte 1))))))
@@ -513,6 +516,13 @@ fails."
       (propcheck--shrink-counterexample fun seed propcheck-max-shrinks))))
 
 (defmacro propcheck-deftest (name args &rest body)
+  "Define NAME (a symbol) as a propcheck test.
+
+BODY is repeatedly evaluated. It should use `propcheck-should'
+for assertions.
+
+If a counterexample is found, the test will fail and the smallest
+inputs found will be reported."
   (declare (doc-string 3) (indent 2)
            (debug (&define :name test
                            name sexp [&optional stringp]
