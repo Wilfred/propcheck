@@ -472,24 +472,27 @@ Assumes AMOUNT is not greater than 8."
            (-slice seed-bytes interval-start interval-end))
           (new-bytes nil)
           (carry 0))
-    (dolist (byte interval-bytes)
-      ;; Given byte 0xN, we build 2 byte number 0xN0,
-      ;; shift to produce 0xPQ, then P is our new byte and Q is
-      ;; the carry.
-      (let* ((padded-byte (lsh byte 8)))
-        ;; Do the shift.
-        (setq padded-byte (lsh padded-byte (- amount)))
-        ;; Extract the new byte and new carry.
-        (setq byte (+ (logand (lsh padded-byte -8) 255)
-                      carry))
-        (setq carry (logand padded-byte 255))
-        (push byte new-bytes)))
+    ;; Return nil if shifting right would give us the same seed.
+    (unless (--all-p (zerop it) interval-bytes)
 
-    (-each-indexed (nreverse new-bytes)
-      (lambda (i byte)
-        (setq seed
-              (propcheck--set-byte seed (+ interval-start i) byte))))
-    seed))
+      (dolist (byte interval-bytes)
+        ;; Given byte 0xN, we build 2 byte number 0xN0,
+        ;; shift to produce 0xPQ, then P is our new byte and Q is
+        ;; the carry.
+        (let* ((padded-byte (lsh byte 8)))
+          ;; Do the shift.
+          (setq padded-byte (lsh padded-byte (- amount)))
+          ;; Extract the new byte and new carry.
+          (setq byte (+ (logand (lsh padded-byte -8) 255)
+                        carry))
+          (setq carry (logand padded-byte 255))
+          (push byte new-bytes)))
+
+      (-each-indexed (nreverse new-bytes)
+        (lambda (i byte)
+          (setq seed
+                (propcheck--set-byte seed (+ interval-start i) byte))))
+      seed)))
 
 (defun propcheck--shrink-counterexample (fun seed shrinks)
   "Call FUN up to SHRINKS times, to find a smaller version of SEED that still

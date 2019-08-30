@@ -214,6 +214,12 @@
       (propcheck-seed-bytes result)
       '(0 2 1 0 128)))))
 
+(ert-deftest propcheck--shift-right-interval--zeroes ()
+  "Return nil if shifting bytes will give the same result"
+  (let* ((seed (propcheck-seed '(0 0 0 0 0) 0 '((0 5)))))
+    (should
+     (null (propcheck--shift-right-interval seed 0 1)))))
+
 (ert-deftest propcheck--list-< ()
   (should
    (propcheck--list-< '(1 2) '(3 4)))
