@@ -1,4 +1,4 @@
-# propcheck
+# propcheck [![Build Status](https://travis-ci.org/Wilfred/propcheck.svg?branch=master)](https://travis-ci.org/Wilfred/propcheck)
 
 propcheck brings property based testing to elisp.
 
