@@ -24,12 +24,10 @@ result.
   (>= num 0))
 
 (propcheck-deftest buggy-zerop-should-match-zerop ()
-  (let* ((i (propcheck-generate-integer "i"))
-         (result (buggy-zerop i)))
+  (let* ((i (propcheck-generate-integer "i")))
     (propcheck-should
-     ;; If `zerop' returns t, we should also return t, otherwise we
-     ;; should return false.
-     (if (zerop i) result (not result)))))
+     (eq (zerop i)
+         (buggy-zerop i)))))
 ```
 
 ## Generators
