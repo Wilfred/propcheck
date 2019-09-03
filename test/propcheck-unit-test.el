@@ -273,8 +273,8 @@
              (num (propcheck-generate-integer nil)))
         (when (= num 1)
           (cl-incf optimal-count))))
-    ;; We should get the optimal result at least 50% of the time.
-    (should (>= optimal-count 5))))
+    ;; We should get the optimal result at least 90% of the time.
+    (should (>= optimal-count 9))))
 
 (defun propcheck--buggy-max-pair (x y)
   (if (< x 101)
@@ -320,8 +320,8 @@ the optimal result."
              (y (propcheck-generate-integer nil)))
         (when (and (= x 101) (= y 102))
           (cl-incf optimal-count))))
-    ;; We should get the optimal result at least 50% of the time.
-    (should (>= optimal-count 5))))
+    ;; We should get the optimal result at least 90% of the time.
+    (should (>= optimal-count 9))))
 
 (defun propcheck--buggy-max-item (items)
   (car items))
