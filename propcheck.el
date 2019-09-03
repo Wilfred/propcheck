@@ -177,6 +177,9 @@ replaying."
       (>= rand-byte 128))))
 
 (defun propcheck-generate-integer (name)
+  "Generate an interger.
+Values may be anywhere between `most-positive-fixnum' and
+`most-negative-fixnum'."
   (propcheck-remember name
     (let ((sign (car (propcheck--draw-bytes propcheck-seed 1))))
       ;; 50% chance of negative numbers.
