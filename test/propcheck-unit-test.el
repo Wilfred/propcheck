@@ -57,6 +57,13 @@
     (should
      (propcheck-generate-bool nil))))
 
+(ert-deftest propcheck-generate-one-of ()
+  (let* ((propcheck--replay t)
+         (propcheck-seed (propcheck-seed '(0)))
+         (choices (list "a" "b" "c")))
+    (should
+     (member (propcheck-generate-one-of nil choices) choices))))
+
 (ert-deftest propcheck-generate-integer ()
   (let* ((propcheck--replay t)
          (propcheck-seed (propcheck-seed '(0 0 0 0 0 0 0 0 0))))

@@ -40,3 +40,4 @@ propcheck provides the following generators:
 * `propcheck-generate-proper-list`
 * `propcheck-generate-vector`
 * `propcheck-generate-string`
+* `propcheck-generate-one-of`

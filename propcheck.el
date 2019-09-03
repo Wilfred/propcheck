@@ -208,6 +208,14 @@ Values may be anywhere between `most-positive-fixnum' and
                it)))
     result))
 
+(defun propcheck-generate-one-of (name choices)
+  "Generate a single item from the list CHOICES."
+  (when (> (length choices) 255)
+    (user-error "propcheck-generate-one-of is limited to 255 choices."))
+  (propcheck-remember name
+    (let ((byte (propcheck--draw-byte propcheck-seed)))
+      (nth (mod byte (length choices)) choices))))
+
 (defun propcheck-generate-ascii-char (name)
   "Generate a number that's an ASCII char.
 Note that elisp does not have a separate character type."
