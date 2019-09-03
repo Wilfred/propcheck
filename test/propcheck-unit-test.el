@@ -53,7 +53,7 @@
     (should
      (null (propcheck-generate-bool nil))))
   (let* ((propcheck--replay t)
-         (propcheck-seed (propcheck-seed '(1))))
+         (propcheck-seed (propcheck-seed '(255))))
     (should
      (propcheck-generate-bool nil))))
 
@@ -79,14 +79,14 @@
 
 (ert-deftest propcheck-generate-proper-list ()
   (let* ((propcheck--replay t)
-         (propcheck-seed (propcheck-seed '(64 1 0)))
+         (propcheck-seed (propcheck-seed '(255 255 0)))
          (list (propcheck-generate-proper-list nil #'propcheck-generate-bool)))
     (should
      (equal list '(t)))))
 
 (ert-deftest propcheck-generate-vector ()
   (let* ((propcheck--replay t)
-         (propcheck-seed (propcheck-seed '(64 1 0)))
+         (propcheck-seed (propcheck-seed '(255 255 0)))
          (vec (propcheck-generate-vector nil #'propcheck-generate-bool)))
     (should
      (equal vec [t]))))

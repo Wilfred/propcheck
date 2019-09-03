@@ -174,7 +174,7 @@ replaying."
   "Generate either nil or t."
   (propcheck-remember name
     (let ((rand-byte (car (propcheck--draw-bytes propcheck-seed 1))))
-      (not (zerop (logand rand-byte 1))))))
+      (>= rand-byte 128))))
 
 (defun propcheck-generate-integer (name)
   (propcheck-remember name
