@@ -206,6 +206,27 @@
     (should
      (null (propcheck--zero-interval seed 0)))))
 
+(ert-deftest propcheck--subtract-interval ()
+  (let* ((seed (propcheck-seed '(10 20) 0 '((0 2))))
+         (result (propcheck--subtract-interval seed 0 1)))
+    (should
+     (equal
+      (propcheck-seed-bytes result)
+      '(10 19)))))
+
+(ert-deftest propcheck--subtract-interval--carry ()
+  (let* ((seed (propcheck-seed '(1 0 0) 0 '((0 3))))
+         (result (propcheck--subtract-interval seed 0 1)))
+    (should
+     (equal
+      (propcheck-seed-bytes result)
+      '(0 255 255)))))
+
+(ert-deftest propcheck--subtract-interval--too-small ()
+  (let ((seed (propcheck-seed '(0 0 5) 0 '((0 3)))))
+    (should
+     (null (propcheck--subtract-interval seed 0 10)))))
+
 (ert-deftest propcheck--shift-right-interval ()
   (let* ((seed (propcheck-seed '(0 4 2 1 0) 0 '((0 5))))
          (result (propcheck--shift-right-interval seed 0 1)))
@@ -286,8 +307,21 @@ the optimal result."
          examples)))
     examples))
 
-;; Ideal result: (101 102) every time.
-(propcheck--max-pair-examples)
+(ert-deftest propcheck-shrinking-buggy-zerop ()
+  "Ensure that we find the minimal counterexample for
+`propcheck--buggy-zerop'."
+  (let ((optimal-count 0))
+    (dotimes (_ 10)
+      (let* ((found-seed
+              (propcheck--find-small-counterexample #'propcheck--buggy-max-pair-test))
+             (propcheck-seed found-seed)
+             (propcheck--replay t)
+             (x (propcheck-generate-integer nil))
+             (y (propcheck-generate-integer nil)))
+        (when (and (= x 101) (= y 102))
+          (cl-incf optimal-count))))
+    ;; We should get the optimal result at least 50% of the time.
+    (should (>= optimal-count 5))))
 
 (defun propcheck--buggy-max-item (items)
   (car items))

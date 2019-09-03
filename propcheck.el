@@ -444,12 +444,49 @@ Reduce the size of SEED by applying SHRINK-FN."
     (unless (zerop byte)
       (propcheck--set-byte seed i 0))))
 
-(defun propcheck--subtract-byte (seed i amount)
-  "subtract AMOUNT at I in SEED."
-  (let* ((bytes (propcheck-seed-bytes seed))
-         (byte (nth i bytes)))
-    (when (> byte amount)
-      (propcheck--set-byte seed i (- byte amount)))))
+(defun propcheck--decrement-and-carry (bytes start-i)
+  ;; Given a sequence X Y Z, convert to
+  ;; X-1 Y+255 Z+255
+  (--map-indexed
+   (cond
+    ((< it-index start-i)
+     it)
+    ((= it-index start-i)
+     (1- it))
+    (t
+     (+ it 255)))
+   bytes))
+
+(defun propcheck--subtract-interval (seed i amount)
+  "Subtract AMOUNT at I in SEED. If the result would be a seed of all zeroes,
+return nil.
+
+AMOUNT must be less than 255. Saturates at zero rather than
+underflowing."
+  (-let* ((seed-bytes (propcheck-seed-bytes seed))
+          ((interval-start interval-end)
+           (nth i (reverse (propcheck-seed-intervals seed))))
+          (interval-bytes
+           (-slice seed-bytes interval-start interval-end))
+          (last-byte (-last-item interval-bytes)))
+    (-when-let* ((first-nonzero-i
+                  (--find-index (not (zerop it)) interval-bytes))
+                 ;; Ensure that we won't end up with a zero seed afterwards.
+                 (nonzero-result
+                  (or (< first-nonzero-i (1- (length interval-bytes)))
+                      (> last-byte amount))))
+      (if (> last-byte amount)
+          ;; It's sufficient to just decrement the last byte.
+          (propcheck--set-byte seed (1- interval-end) (- last-byte amount))
+        ;; The last byte isn't big enough, so find an earlier nonzero
+        ;; byte, carry is to the later bytes, then do the subtraction.
+        (let* ((carry-byte-i
+                (--find-last-index (not (zerop it)) (-butlast interval-bytes)))
+               (new-bytes (propcheck--decrement-and-carry interval-bytes carry-byte-i)))
+          (--each-indexed new-bytes
+            (setq seed
+                  (propcheck--set-byte seed (+ interval-start it-index) it)))
+          seed)))))
 
 (defun propcheck--zero-interval (seed n)
   "Set interval N in SEED to zero. Returns a copy of SEED."
@@ -506,8 +543,8 @@ fails."
          (propcheck--shrink-byte-by fun #'propcheck--zero-byte)
          (propcheck--shrink-swapping-intervals fun)
          (propcheck--shrink-interval-by fun (-rpartial #'propcheck--shift-right-interval 1))
-         (propcheck--shrink-byte-by fun (-rpartial #'propcheck--subtract-byte 10))
-         (propcheck--shrink-byte-by fun (-rpartial #'propcheck--subtract-byte 1)))))
+         (propcheck--shrink-interval-by fun (-rpartial #'propcheck--subtract-interval 10))
+         (propcheck--shrink-interval-by fun (-rpartial #'propcheck--subtract-interval 1)))))
 
 (defun propcheck--find-small-counterexample (fun)
   (let ((seed
