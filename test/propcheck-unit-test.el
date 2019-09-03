@@ -253,7 +253,7 @@
         (when (= num 1)
           (cl-incf optimal-count))))
     ;; We should get the optimal result at least 50% of the time.
-    (should (>= optimal-count))))
+    (should (>= optimal-count 5))))
 
 (defun propcheck--buggy-max-pair (x y)
   (if (< x 101)
