@@ -175,9 +175,7 @@ replaying."
 
 (defun propcheck-generate-bool (name)
   "Generate either nil or t."
-  (propcheck-remember name
-    (>= (propcheck--draw-byte propcheck-seed)
-        128)))
+  (propcheck-generate-one-of name '(nil t)))
 
 (defun propcheck-generate-integer (name)
   "Generate an interger.
@@ -208,13 +206,32 @@ Values may be anywhere between `most-positive-fixnum' and
                it)))
     result))
 
+(defun propcheck--whole-num-p (num)
+  "Return t if NUM is a whole number, even if it's a float."
+  (= num (ceiling num)))
+
+(defun propcheck--power-of (num base)
+  (propcheck--whole-num-p (log num base)))
+
 (defun propcheck-generate-one-of (name choices)
   "Generate a single item from the list CHOICES."
-  (when (> (length choices) 255)
-    (user-error "propcheck-generate-one-of is limited to 255 choices."))
-  (propcheck-remember name
-    (let ((byte (propcheck--draw-byte propcheck-seed)))
-      (nth (mod byte (length choices)) choices))))
+  (let ((num-choices (length choices)))
+    (when (> (length choices) 256)
+      (user-error "propcheck-generate-one-of is limited to 256 choices."))
+    (propcheck-remember name
+      (let ((byte (propcheck--draw-byte propcheck-seed)))
+        (if (propcheck--power-of num-choices 2)
+            ;; Uniformly choose an item from the list, ensuring that
+            ;; smaller bytes produce earlier numbers.
+            ;; E.g. for 4 items:
+            ;; 1-63: 0
+            ;; 64-127: 1
+            ;; 128-191: 2
+            ;; 192-255: 3
+            (nth (/ (* byte num-choices) 256) choices)
+          ;; Sadly this isn't uniform, it will choose items from
+          ;; earlier in the list more often.
+          (nth (mod byte num-choices) choices))))))
 
 (defun propcheck-generate-ascii-char (name)
   "Generate a number that's an ASCII char.
