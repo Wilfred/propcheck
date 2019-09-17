@@ -63,7 +63,7 @@
          (propcheck-seed (propcheck-seed '(0)))
          (choices (list "a" "b" "c")))
     (should
-     (member (propcheck-generate-one-of nil choices) choices))))
+     (member (propcheck-generate-one-of nil :values choices) choices))))
 
 (ert-deftest propcheck-generate-one-of--power-2 ()
   "For lists whose length is a power of two, later items should
@@ -72,7 +72,7 @@ be chosen with higher seeds."
          (propcheck-seed (propcheck-seed '(128)))
          (choices (list "a" "b" "c" "d")))
     (should
-     (equal (propcheck-generate-one-of nil choices) "c"))))
+     (equal (propcheck-generate-one-of nil :values choices) "c"))))
 
 (ert-deftest propcheck-generate-integer ()
   (let* ((propcheck--replay t)

@@ -175,7 +175,7 @@ replaying."
 
 (defun propcheck-generate-bool (name)
   "Generate either nil or t."
-  (propcheck-generate-one-of name '(nil t)))
+  (propcheck-generate-one-of name :values '(nil t)))
 
 (defun propcheck-generate-integer (name)
   "Generate an interger.
@@ -213,10 +213,10 @@ Values may be anywhere between `most-positive-fixnum' and
 (defun propcheck--power-of (num base)
   (propcheck--whole-num-p (log num base)))
 
-(defun propcheck-generate-one-of (name choices)
-  "Generate a single item from the list CHOICES."
-  (let ((num-choices (length choices)))
-    (when (> (length choices) 256)
+(cl-defun propcheck-generate-one-of (name &key values)
+  "Generate a single item from the list VALUES."
+  (let ((num-choices (length values)))
+    (when (> (length values) 256)
       (user-error "propcheck-generate-one-of is limited to 256 choices."))
     (propcheck-remember name
       (let ((byte (propcheck--draw-byte propcheck-seed)))
@@ -228,10 +228,10 @@ Values may be anywhere between `most-positive-fixnum' and
             ;; 64-127: 1
             ;; 128-191: 2
             ;; 192-255: 3
-            (nth (/ (* byte num-choices) 256) choices)
+            (nth (/ (* byte num-choices) 256) values)
           ;; Sadly this isn't uniform, it will choose items from
           ;; earlier in the list more often.
-          (nth (mod byte num-choices) choices))))))
+          (nth (mod byte num-choices) values))))))
 
 (defun propcheck-generate-ascii-char (name)
   "Generate a number that's an ASCII char.
