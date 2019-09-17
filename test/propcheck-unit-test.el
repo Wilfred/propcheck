@@ -97,14 +97,14 @@ be chosen with higher seeds."
 (ert-deftest propcheck-generate-proper-list ()
   (let* ((propcheck--replay t)
          (propcheck-seed (propcheck-seed '(255 255 0)))
-         (list (propcheck-generate-proper-list nil #'propcheck-generate-bool)))
+         (list (propcheck-generate-proper-list nil :value-fn #'propcheck-generate-bool)))
     (should
      (equal list '(t)))))
 
 (ert-deftest propcheck-generate-vector ()
   (let* ((propcheck--replay t)
          (propcheck-seed (propcheck-seed '(255 255 0)))
-         (vec (propcheck-generate-vector nil #'propcheck-generate-bool)))
+         (vec (propcheck-generate-vector nil :value-fn #'propcheck-generate-bool)))
     (should
      (equal vec [t]))))
 
@@ -344,7 +344,7 @@ the optimal result."
   (car items))
 
 (defun propcheck--buggy-max-item-test ()
-  (let* ((items (propcheck-generate-proper-list nil #'propcheck-generate-integer))
+  (let* ((items (propcheck-generate-proper-list nil :value-fn #'propcheck-generate-integer))
          (result (propcheck--buggy-max-item items)))
     (when items
       (propcheck-should (eq (car (-sort #'> items)) result)))))
@@ -359,7 +359,7 @@ the optimal result."
              (propcheck-seed found-seed)
              (propcheck--replay t))
         (push
-         (propcheck-generate-proper-list nil #'propcheck-generate-integer)
+         (propcheck-generate-proper-list nil :value-fn #'propcheck-generate-integer)
          examples)))
     examples))
 

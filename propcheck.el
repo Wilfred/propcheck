@@ -245,22 +245,22 @@ Note that elisp does not have a separate character type."
       (+ min-ascii (mod byte ascii-range)))))
 
 ;; TODO: circular lists, improprer lists/trees.
-(defun propcheck-generate-proper-list (name item-generator)
-  "Generate a list whose items are drawn from ITEM-GENERATOR."
+(cl-defun propcheck-generate-proper-list (name &key value-fn)
+  "Generate a list whose values are drawn from VALUE-FN."
   (propcheck-remember name
     (let ((result nil))
       ;; Make the list bigger most of the time. 50 is the threshold used
       ;; in ListStrategy.java in hypothesis-java.
       ;; See utils.py/more in Hypothesis for a smarter approach.
       (while (> (propcheck--draw-byte propcheck-seed) 50)
-        (push (funcall item-generator nil) result))
+        (push (funcall value-fn nil) result))
       result)))
 
-(defun propcheck-generate-vector (name item-generator)
-  "Generate a vector whose items are drawn from ITEM-GENERATOR."
+(defun propcheck-generate-vector (name &key value-fn)
+  "Generate a vector whose values are drawn from VALUE-FN."
   (propcheck-remember name
     (apply #'vector
-           (propcheck-generate-proper-list nil item-generator))))
+           (propcheck-generate-proper-list nil :value-fn value-fn))))
 
 (defun propcheck-generate-string (name)
   "Generate a string."
