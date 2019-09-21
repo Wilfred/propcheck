@@ -41,3 +41,15 @@ propcheck provides the following generators:
 * `propcheck-generate-vector`
 * `propcheck-generate-string`
 * `propcheck-generate-one-of`
+
+### Using Generators Interactively
+
+Generally you'll want to use `propcheck-deftest` to handle seeds for
+you. You can still experiement with generator functions in `M-x ielm`
+if you bind `propcheck-seed` first. Here's an example:
+
+``` emacs-lisp
+(let ((propcheck-seed (propcheck-seed)))
+  (propcheck-generate-string nil))
+```
+
