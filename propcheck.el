@@ -177,34 +177,68 @@ counterexample?"
   "Generate either nil or t."
   (propcheck-generate-one-of name :values '(nil t)))
 
-(defun propcheck-generate-integer (name)
-  "Generate an interger.
-Values may be anywhere between `most-positive-fixnum' and
-`most-negative-fixnum'."
-  (propcheck-remember name
-    (let ((sign (propcheck--draw-byte propcheck-seed)))
-      ;; 50% chance of negative numbers.
-      (if (<= sign 128)
-          (propcheck--generate-positive-integer)
-        (1-
-         (- (propcheck--generate-positive-integer)))))))
+;; Assume these are unsigned numbers. Generate an integer using as
+;; many bits as necessary to generate a (MAX - MIN) number. Add MIN.
 
-(defun propcheck--generate-positive-integer ()
-  (let* ((bits-in-integers (round (log most-positive-fixnum 2)))
-         (bytes-needed (ceiling (/ bits-in-integers 8.0)))
-         (high-bits-needed (- bits-in-integers
-                              (* (1- bytes-needed) 8)))
-         (rand-bytes (propcheck--draw-bytes propcheck-seed bytes-needed))
-         (result 0))
-    (--each-indexed rand-bytes
+(defun propcheck--num-bits (num)
+  "Return the number of BITS required for NUM."
+  (let ((res 0))
+    (while (not (zerop num))
+      (setq num (lsh num -1))
+      (cl-incf res))
+    res))
+
+(defun propcheck--generate-integer-up-to (max)
+  "Generate an integer between 0 and MAX (inclusive).
+Treats MAX as an unsigned integer."
+  (let* ((num-bits (propcheck--num-bits max))
+         (num-bytes (ceiling (/ num-bits 8.0)))
+         (high-bits-needed (- num-bits
+                              (* (1- num-bytes) 8)))
+         (bytes (propcheck--draw-bytes propcheck-seed num-bytes))
+         (num 0))
+    (--each-indexed bytes
       ;; Avoid overflow for the bits in the highest byte.
       (when (zerop it-index)
         (setq it (lsh it (- high-bits-needed 8))))
 
-      (setq result
-            (+ (* result 256)
+      (setq num
+            (+ (* num 256)
                it)))
-    result))
+    ;; We've generated a number up to 2^N, but that might exceed
+    ;; MAX. Take a modulus.
+    ;;
+    ;; This ensures we draw numbers uniformly if MAX is a power 2. If
+    ;; it isn't, lower numbers may occur up to 2x more often (due to
+    ;; the modulus).
+    (when (or
+           (and (> max 0) (> num max))
+           ;; Treating negative numbers as large positive numbers here.
+           (and (< max 0) (< num max)))
+      (setq num (- num max)))
+    num))
+
+(cl-defun propcheck-generate-integer (name &key min &key max)
+  "Generate an interger between MIN and MAX (both inclusive).
+Integers should be chosen fairly uniformly from the range.
+
+If no limits are specified, values may be anywhere between
+`most-positive-fixnum' and `most-negative-fixnum'."
+  (when (and min max)
+    (unless (< min max)
+      (user-error "min %d is not less than max %d" min max)))
+  (propcheck-remember name
+    (let* ((num-min (or min most-negative-fixnum))
+           (num-max (or max most-positive-fixnum))
+           (range (- num-max num-min))
+           (num (propcheck--generate-integer-up-to range)))
+      (if (or min max)
+          ;; If the user specified MIN or MAX, ensure our smallest
+          ;; value is MIN. This means we shrink towards MIN.
+          (+ num min)
+        ;; If we weren't given a range, NUM will already cover the
+        ;; whole range of integers. Don't add MIN, so we shrink towards zero.
+        num))))
 
 (defun propcheck--whole-num-p (num)
   "Return t if NUM is a whole number, even if it's a float."

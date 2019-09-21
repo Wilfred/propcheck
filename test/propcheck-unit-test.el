@@ -74,25 +74,38 @@ be chosen with higher seeds."
     (should
      (equal (propcheck-generate-one-of nil :values choices) "c"))))
 
-(ert-deftest propcheck-generate-integer ()
+(ert-deftest propcheck-generate-integer--zero ()
+  "Ensure a zero byte gives us a zero output, so we shrink
+towards zero."
   (let* ((propcheck--replay t)
-         (propcheck-seed (propcheck-seed '(0 0 0 0 0 0 0 0 0))))
+         (propcheck-seed
+          (propcheck-seed '(0 0 0 0 0 0 0 0))))
     (should
-     (zerop (propcheck-generate-integer nil))))
-  (let* ((propcheck--replay t)
-         (propcheck-seed (propcheck-seed '(0 0 0 0 0 0 0 1 1))))
-    (should
-     (= (propcheck-generate-integer nil) 257))))
+     (zerop (propcheck-generate-integer nil)))))
 
-(ert-deftest propcheck-generate-integer--max-values ()
+(ert-deftest propcheck-generate-integer--max ()
+  "Ensure the max seed returns the max number (considered as an
+unsigned integer)."
   (let* ((propcheck--replay t)
-         (propcheck-seed (propcheck-seed '(0 255 255 255 255 255 255 255 255))))
+         (propcheck-seed
+          (propcheck-seed '(255 255 255 255 255 255 255 255 255))))
     (should
-     (= (propcheck-generate-integer nil) most-positive-fixnum)))
+     (= (propcheck-generate-integer nil) -1))))
+
+(ert-deftest propcheck-generate-integer--range-min ()
+  "When specifying a range, zero seeds should give MIN."
   (let* ((propcheck--replay t)
-         (propcheck-seed (propcheck-seed '(255 255 255 255 255 255 255 255 255))))
+         (propcheck-seed
+          (propcheck-seed '(0 0 0 0 0 0 0 0))))
     (should
-     (= (propcheck-generate-integer nil) most-negative-fixnum))))
+     (= (propcheck-generate-integer nil :min 5) 5))))
+
+(ert-deftest propcheck-generate-integer--range-max ()
+  "If the range is a power of 2, the max seed should give us MAX."
+  (let* ((propcheck--replay t)
+         (propcheck-seed (propcheck-seed '(255))))
+    (should
+     (= (propcheck-generate-integer nil :min 0 :max 255) 255))))
 
 (ert-deftest propcheck-generate-proper-list ()
   (let* ((propcheck--replay t)
