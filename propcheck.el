@@ -159,8 +159,8 @@ counterexample?"
 ;; * Smaller seeds should not consume more bytes than larger seeds
 
 (defmacro propcheck-remember (name &rest body)
-  "Evaluate BODY as `progn', but save the returned value if we're
-replaying."
+  "Evaluate BODY as `progn', but save the returned value in
+`propcheck--replay' if we're replaying."
   (declare (indent 1) (debug t))
   (let ((name-sym (gensym "propcheck-name"))
         (val-sym (gensym "propcheck-val")))
