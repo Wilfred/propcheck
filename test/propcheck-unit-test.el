@@ -343,12 +343,11 @@ the optimal result."
   (let ((optimal-count 0))
     (dotimes (_ 10)
       (let* ((found-seed
-              (propcheck--find-small-counterexample #'propcheck--buggy-max-pair-test))
+              (propcheck--find-small-counterexample #'propcheck--buggy-zerop-test))
              (propcheck-seed found-seed)
              (propcheck--replay t)
-             (x (propcheck-generate-integer nil))
-             (y (propcheck-generate-integer nil)))
-        (when (and (= x 101) (= y 102))
+             (i (propcheck-generate-integer nil)))
+        (when (= i 1)
           (cl-incf optimal-count))))
     ;; We should get the optimal result at least 90% of the time.
     (should (>= optimal-count 9))))
