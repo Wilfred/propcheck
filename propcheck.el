@@ -322,10 +322,12 @@ Note that elisp does not have a separate character type."
   "Generate a string."
   (propcheck-remember name
     (let ((chars nil))
-      ;; Dumb: 75% chance of making the string bigger on each draw.
+      ;; 90% chance of making the string bigger on each loop. This
+      ;; means 10% of outputs will be the empty string.
+      ;; 
       ;; TODO: see what hypothesis does
       ;; TODO: multibyte support, key sequence support
-      (while (>= (propcheck--draw-byte propcheck-seed) 64)
+      (while (>= (propcheck--draw-byte propcheck-seed) 26)
         (push
          (propcheck-generate-ascii-char nil)
          chars))
