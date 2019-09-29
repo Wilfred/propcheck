@@ -153,10 +153,13 @@ counterexample?"
 ;;; Generators
 
 ;; These functions generate a random value, updating `propcheck-seed'.
-;; They have two important invariants:
+;; Wherever possible, generators should:
 ;;
-;; * Smaller seeds should produce smaller inputs
-;; * Smaller seeds should not consume more bytes than larger seeds
+;; * Produce smaller inputs on smaller seeds. If not, we report
+;;   unnecessarily large counterexamples.
+;; 
+;; * Consume fewer bytes when given a smaller seed. If not, shrinking
+;;   is less effective (see `propcheck--overrun' usage).
 
 (defmacro propcheck-remember (name &rest body)
   "Evaluate BODY as `progn', but save the returned value in
