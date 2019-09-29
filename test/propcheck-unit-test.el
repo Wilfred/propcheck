@@ -333,7 +333,9 @@ unsigned integer)."
 
 (defun propcheck--max-pair-examples ()
   "Generate several counterexamples to see how often we produce
-the optimal result."
+the optimal result.
+
+This is intended for manual testing. Try calling it inside an ielm buffer."
   (let (examples)
     (dotimes (_ 10)
       (let* ((found-seed
