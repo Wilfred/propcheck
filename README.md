@@ -36,6 +36,7 @@ propcheck provides the following generators:
 
 * `propcheck-generate-bool`
 * `propcheck-generate-integer`
+* `propcheck-generate-float`
 * `propcheck-generate-ascii-char`
 * `propcheck-generate-proper-list`
 * `propcheck-generate-vector`

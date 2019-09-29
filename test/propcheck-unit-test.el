@@ -322,6 +322,15 @@ unsigned integer)."
       ;; we should have returned y.
       (propcheck-should (eq result y)))))
 
+(defun propcheck--buggy-max-pair-float-test ()
+  (let* ((x (propcheck-generate-float "x"))
+         (y (propcheck-generate-float "y"))
+         (result (propcheck--buggy-max-pair x y)))
+    ;; For simplicity, only check the case when x is less than y.
+    (when (< x y)
+      ;; we should have returned y.
+      (propcheck-should (eq result y)))))
+
 (defun propcheck--max-pair-examples ()
   "Generate several counterexamples to see how often we produce
 the optimal result."
@@ -334,6 +343,23 @@ the optimal result."
         (push
          (list (propcheck-generate-integer "x")
                (propcheck-generate-integer "y"))
+         examples)))
+    examples))
+
+(defun propcheck--max-pair-examples-float ()
+  "Generate several counterexamples to see how often we produce
+the optimal result.
+
+This is intended for manual testing. Try calling it inside an ielm buffer."
+  (let (examples)
+    (dotimes (_ 10)
+      (let* ((found-seed
+              (propcheck--find-small-counterexample #'propcheck--buggy-max-pair-float-test))
+             (propcheck-seed found-seed)
+             (propcheck--replay t))
+        (push
+         (list (propcheck-generate-float "x")
+               (propcheck-generate-float "y"))
          examples)))
     examples))
 

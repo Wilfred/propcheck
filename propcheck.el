@@ -267,6 +267,28 @@ If no limits are specified, values may be anywhere between
           ;; earlier in the list more often.
           (nth (mod byte num-choices) values))))))
 
+(defun propcheck-generate-float (name)
+  "Generate a floating point value."
+  ;; TODO: nan, inf, cover the full floating point range.
+  ;; TODO: this shrinks really poorly, favouring values near powers of
+  ;; 2.
+  (propcheck-remember name
+    (let* ((significand-offset
+            (propcheck-generate-integer nil :min 0 :max 10000))
+           (significand
+            ;; Significands can be 0.5 to 1.0, -0.5 to -1.0 or
+            ;; 0.0. See info manual for `frexp'.
+            (if (zerop significand-offset)
+                0.0
+              (+ 0.5 (/ significand-offset 10000.0))))
+           (exponent
+            (propcheck-generate-integer nil :min 0 :max 1000))
+           (num
+            (ldexp significand exponent)))
+      (if (propcheck-generate-bool nil)
+          num
+        (- num)))))
+
 (defun propcheck-generate-ascii-char (name)
   "Generate a number that's an ASCII char.
 Note that elisp does not have a separate character type."
