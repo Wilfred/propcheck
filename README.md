@@ -20,10 +20,22 @@ result.
 (require 'propcheck)
 
 (defun buggy-zerop (num)
-  ;; Return t for all values >= 0, so our minimal example should be 1.
+  ;; Return t for all values >= 0. This is wrong! We'll claim that 42
+  ;; is zero.
+  ;;
+  ;; There are lots of numbers that produce a wrong result from this
+  ;; function, but 1 is the smallest. Ideally propcheck would report 1
+  ;; as failing example. It usually does.
   (>= num 0))
 
 (propcheck-deftest buggy-zerop-should-match-zerop ()
+  ;; The body of this test will be evaluated repeatedly (up to
+  ;; `propcheck-max-examples` times). The value generated will be
+  ;; different on each iteration.
+  ;;
+  ;; If the assertion ever fails, propcheck will call the body again
+  ;; with progressively smaller values, then report the smallest
+  ;; failing example it could find.
   (let* ((i (propcheck-generate-integer "i")))
     (propcheck-should
      (eq (zerop i)
