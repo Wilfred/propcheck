@@ -247,7 +247,8 @@ If no limits are specified, values may be anywhere between
   "Return t if NUM is a whole number, even if it's a float."
   (= num (ceiling num)))
 
-(defun propcheck--power-of (num base)
+(defun propcheck--power-of-p (num base)
+  "Return t if NUM is a power of BASE."
   (propcheck--whole-num-p (log num base)))
 
 (cl-defun propcheck-generate-one-of (name &key values)
@@ -257,7 +258,7 @@ If no limits are specified, values may be anywhere between
       (user-error "propcheck-generate-one-of is limited to 256 choices."))
     (propcheck-remember name
       (let ((byte (propcheck--draw-byte propcheck-seed)))
-        (if (propcheck--power-of num-choices 2)
+        (if (propcheck--power-of-p num-choices 2)
             ;; Uniformly choose an item from the list, ensuring that
             ;; smaller bytes produce earlier numbers.
             ;; E.g. for 4 items:
