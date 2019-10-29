@@ -571,7 +571,7 @@ underflowing."
           ;; It's sufficient to just decrement the last byte.
           (propcheck--set-byte seed (1- interval-end) (- last-byte amount))
         ;; The last byte isn't big enough, so find an earlier nonzero
-        ;; byte, carry is to the later bytes, then do the subtraction.
+        ;; byte, carry it to the later bytes, then do the subtraction.
         (let* ((carry-byte-i
                 (--find-last-index (not (zerop it)) (-butlast interval-bytes)))
                (new-bytes (propcheck--decrement-and-carry interval-bytes carry-byte-i)))
