@@ -1,4 +1,4 @@
-# propcheck [![Build Status](https://travis-ci.org/Wilfred/propcheck.svg?branch=master)](https://travis-ci.org/Wilfred/propcheck) [![Coverage Status](https://coveralls.io/repos/github/Wilfred/propcheck/badge.svg?branch=master)](https://coveralls.io/github/Wilfred/propcheck?branch=master)
+# propcheck [![Coverage Status](https://coveralls.io/repos/github/Wilfred/propcheck/badge.svg?branch=master)](https://coveralls.io/github/Wilfred/propcheck?branch=master)
 
 propcheck brings property based testing to elisp.
 
