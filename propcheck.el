@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2019  Wilfred Hughes
 ;; Version: 0.1
-;; Package-Requires: ((emacs "25.1") (dash "2.18.1"))
+;; Package-Requires: ((emacs "26.1") (dash "2.18.1"))
 
 ;; Author: Wilfred Hughes <me@wilfred.me.uk>
 ;; Keywords: maint, tools
