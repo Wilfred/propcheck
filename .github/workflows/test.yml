@@ -12,6 +12,7 @@ jobs:
           - '27.1'
 
     steps:
+    - uses: actions/setup-python@v2
     - uses: purcell/setup-emacs@master
       with:
         version: ${{ matrix.emacs_version }}
