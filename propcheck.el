@@ -5,7 +5,7 @@
 ;; Package-Requires: ((emacs "25.1") (dash "2.11.0") (dash-functional "1.2.0"))
 
 ;; Author: Wilfred Hughes <me@wilfred.me.uk>
-;; Keywords: testing
+;; Keywords: maint, tools
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
