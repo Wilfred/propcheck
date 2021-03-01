@@ -218,6 +218,16 @@ Treats MAX as an unsigned integer."
            ;; Treating negative numbers as large positive numbers here.
            (and (< max 0) (< num max)))
       (setq num (- num max)))
+
+    ;; In Emacs 26 and earlier, integers are fixnums and they
+    ;; overflow. Emacs 27 uses bignums without overflow.
+    ;;
+    ;; Since we want to be able to return negative numbers, ensure we
+    ;; always overflow.
+    (when (> num most-positive-fixnum)
+      (setq num
+            (+ most-negative-fixnum
+               (- num (1+ most-positive-fixnum)))))
     num))
 
 (cl-defun propcheck-generate-integer (name &key min &key max)
