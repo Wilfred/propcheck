@@ -35,7 +35,7 @@
 
 (require 'dash)
 (eval-when-compile
-  (require 'cl))
+  (require 'cl-lib))
 
 (defvar propcheck-max-examples 100)
 
@@ -58,7 +58,7 @@ generate functions.")
 ;; values.
 ;;
 ;; Hypothesis calls this 'TestData'.
-(defstruct
+(cl-defstruct
     (propcheck-seed
      :named
      (:constructor propcheck-seed
