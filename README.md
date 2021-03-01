@@ -63,6 +63,6 @@ if you bind `propcheck-seed` first. Here's an example:
 
 ``` emacs-lisp
 (let ((propcheck-seed (propcheck-seed)))
-  (propcheck-generate-string nil))
+  (propcheck-generate-string nil)) ; e.g. "M26gM{^*v "
 ```
 
