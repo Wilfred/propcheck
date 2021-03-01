@@ -22,7 +22,7 @@
 
 ;;; Commentary:
 
-;; Property based testing for Emacs Lisp. Heavily influenced by the
+;; Property based testing for Emacs Lisp.  Heavily influenced by the
 ;; wonderful Hypothesis project.
 
 ;; References:
@@ -114,7 +114,7 @@ counterexample?"
   (or propcheck--shrinks-remaining propcheck--replay))
 
 (defun propcheck--debug (&rest _)
-  "Debugging helper function"
+  "Debugging helper function."
   ;; Deliberately don't do anything with the arguments. Instead, use
   ;; M-x trace-function to see values passed to this function when
   ;; also tracing shrinking logic.
@@ -132,7 +132,7 @@ counterexample?"
      intervals)))
 
 (defun propcheck--no-intervals (seed)
-  "Return a copy of SEED with no intervals"
+  "Return a copy of SEED with no intervals."
   (let ((i (propcheck-seed-i seed))
         (bytes (propcheck-seed-bytes seed)))
     (propcheck-seed
@@ -142,7 +142,7 @@ counterexample?"
 
 (defun propcheck--sanity-check (seed)
   (unless seed
-    (error "seed must not be nil"))
+    (error "Seed must not be nil"))
   (unless (propcheck--shrinking-p)
     (unless (=
              (propcheck-seed-i seed)
@@ -228,7 +228,7 @@ If no limits are specified, values may be anywhere between
 `most-positive-fixnum' and `most-negative-fixnum'."
   (when (and min max)
     (unless (< min max)
-      (user-error "min %d is not less than max %d" min max)))
+      (user-error "Min %d is not less than max %d" min max)))
   (propcheck-remember name
     (let* ((num-min (or min most-negative-fixnum))
            (num-max (or max most-positive-fixnum))
