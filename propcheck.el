@@ -673,7 +673,7 @@ inputs found will be reported."
          (when found-seed
            (let ((propcheck--replay '(())))
              (propcheck--funcall-with-seed ,fun-sym found-seed)
-             (ert-fail (list "Found counterexample" (car propcheck--replay)))))))))
+             (ert-fail (list "Found counterexample" (butlast propcheck--replay)))))))))
 
 (provide 'propcheck)
 ;;; propcheck.el ends here
